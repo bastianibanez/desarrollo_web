@@ -2,22 +2,14 @@
   "name": "clase1",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.html",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "vite"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "^11.21.0",
-      "onFail": "download"
-    }
-  },
-  "type": "module",
   "dependencies": {
     "vite": "^8.2.1"
   }
