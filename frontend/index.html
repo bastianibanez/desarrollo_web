@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" defer></script>
+  <style>
+    .site-logo {
+      height: 28px;
+      width: auto;
+    }
+
+    header .nav {
+      --bs-nav-link-color: #2e7d32;
+      --bs-nav-link-hover-color: #173b1b;
+    }
+
+    header .nav-link:focus-visible {
+      box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
+    }
+
+    .hero-img {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 5 / 2;
+      object-fit: cover;
+    }
+
+    .catalog-section {
+      scroll-margin-top: 1.5rem;
+    }
+
+    .product-placeholder {
+      aspect-ratio: 1 / 1;
+      background-color: #f4f7f1;
+      border: 1px solid #b5c8ae;
+      color: #47633f;
+    }
+  </style>
+  <title>FitExpress | Comida rápida saludable</title>
+</head>
+
+<body>
+  <div class="container">
+    <header
+      class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
+      <div class="col-auto mb-2 mb-md-0">
+        <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
+          <img class="site-logo" src="assets/img/logo-trim.png" alt="FitExpress" width="189" height="28" />
+        </a>
+      </div>
+
+      <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+        <li><a href="#combos" class="nav-link px-2">Combos</a></li>
+        <li><a href="#bowls" class="nav-link px-2">Bowls</a></li>
+        <li><a href="#bebestibles" class="nav-link px-2">Bebestibles</a></li>
+        <li><a href="#snacks" class="nav-link px-2">Snacks</a></li>
+        <li><a href="carrito.html" class="nav-link px-2">Carrito</a></li>
+      </ul>
+
+    </header>
+
+    <img class="hero-img rounded-3 mb-4" src="assets/img/hero.png"
+      alt="Combo Power FitExpress: bowl, bebida de proteína y barra por $9.990. Ahorra 23%." />
+
+    <main class="pt-3 pb-4" aria-label="Catálogo de productos">
+      <section id="combos" class="catalog-section mb-5" aria-labelledby="combos-title">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h2 id="combos-title" class="h3 mb-0 text-success">Combos</h2>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-success" type="button" data-bs-target="#carousel-combos" data-bs-slide="prev"
+              aria-label="Ver combos anteriores" aria-controls="carousel-combos">
+              <span aria-hidden="true">&larr;</span>
+            </button>
+            <button class="btn btn-outline-success" type="button" data-bs-target="#carousel-combos" data-bs-slide="next"
+              aria-label="Ver siguientes combos" aria-controls="carousel-combos">
+              <span aria-hidden="true">&rarr;</span>
+            </button>
+          </div>
+        </div>
+        <div id="carousel-combos" class="carousel slide" role="region" aria-roledescription="carrusel"
+          aria-labelledby="combos-title" tabindex="0">
+          <div class="carousel-inner" aria-live="polite">
+            <div class="carousel-item active" role="group" aria-label="Grupo 1 de 2">
+              <div class="row row-cols-2 row-cols-md-4 g-3 g-lg-4">
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Combo 1</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Combo 2</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Combo 3</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Combo 4</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="carousel-item" role="group" aria-label="Grupo 2 de 2">
+              <div class="row row-cols-2 row-cols-md-4 g-3 g-lg-4">
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Combo 5</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Combo 6</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Combo 7</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Combo 8</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="bowls" class="catalog-section mb-5" aria-labelledby="bowls-title">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h2 id="bowls-title" class="h3 mb-0 text-success">Bowls</h2>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-success" type="button" data-bs-target="#carousel-bowls" data-bs-slide="prev"
+              aria-label="Ver bowls anteriores" aria-controls="carousel-bowls">
+              <span aria-hidden="true">&larr;</span>
+            </button>
+            <button class="btn btn-outline-success" type="button" data-bs-target="#carousel-bowls" data-bs-slide="next"
+              aria-label="Ver siguientes bowls" aria-controls="carousel-bowls">
+              <span aria-hidden="true">&rarr;</span>
+            </button>
+          </div>
+        </div>
+        <div id="carousel-bowls" class="carousel slide" role="region" aria-roledescription="carrusel"
+          aria-labelledby="bowls-title" tabindex="0">
+          <div class="carousel-inner" aria-live="polite">
+            <div class="carousel-item active" role="group" aria-label="Grupo 1 de 2">
+              <div class="row row-cols-2 row-cols-md-4 g-3 g-lg-4">
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bowl 1</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bowl 2</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bowl 3</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bowl 4</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="carousel-item" role="group" aria-label="Grupo 2 de 2">
+              <div class="row row-cols-2 row-cols-md-4 g-3 g-lg-4">
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bowl 5</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bowl 6</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bowl 7</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bowl 8</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="bebestibles" class="catalog-section mb-5" aria-labelledby="bebestibles-title">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h2 id="bebestibles-title" class="h3 mb-0 text-success">Bebestibles</h2>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-success" type="button" data-bs-target="#carousel-bebestibles"
+              data-bs-slide="prev" aria-label="Ver bebestibles anteriores" aria-controls="carousel-bebestibles">
+              <span aria-hidden="true">&larr;</span>
+            </button>
+            <button class="btn btn-outline-success" type="button" data-bs-target="#carousel-bebestibles"
+              data-bs-slide="next" aria-label="Ver siguientes bebestibles" aria-controls="carousel-bebestibles">
+              <span aria-hidden="true">&rarr;</span>
+            </button>
+          </div>
+        </div>
+        <div id="carousel-bebestibles" class="carousel slide" role="region" aria-roledescription="carrusel"
+          aria-labelledby="bebestibles-title" tabindex="0">
+          <div class="carousel-inner" aria-live="polite">
+            <div class="carousel-item active" role="group" aria-label="Grupo 1 de 2">
+              <div class="row row-cols-2 row-cols-md-4 g-3 g-lg-4">
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bebestible 1</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bebestible 2</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bebestible 3</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bebestible 4</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="carousel-item" role="group" aria-label="Grupo 2 de 2">
+              <div class="row row-cols-2 row-cols-md-4 g-3 g-lg-4">
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bebestible 5</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bebestible 6</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bebestible 7</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Bebestible 8</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="snacks" class="catalog-section mb-5" aria-labelledby="snacks-title">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h2 id="snacks-title" class="h3 mb-0 text-success">Snacks</h2>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-success" type="button" data-bs-target="#carousel-snacks" data-bs-slide="prev"
+              aria-label="Ver snacks anteriores" aria-controls="carousel-snacks">
+              <span aria-hidden="true">&larr;</span>
+            </button>
+            <button class="btn btn-outline-success" type="button" data-bs-target="#carousel-snacks" data-bs-slide="next"
+              aria-label="Ver siguientes snacks" aria-controls="carousel-snacks">
+              <span aria-hidden="true">&rarr;</span>
+            </button>
+          </div>
+        </div>
+        <div id="carousel-snacks" class="carousel slide" role="region" aria-roledescription="carrusel"
+          aria-labelledby="snacks-title" tabindex="0">
+          <div class="carousel-inner" aria-live="polite">
+            <div class="carousel-item active" role="group" aria-label="Grupo 1 de 2">
+              <div class="row row-cols-2 row-cols-md-4 g-3 g-lg-4">
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Snack 1</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Snack 2</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Snack 3</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Snack 4</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="carousel-item" role="group" aria-label="Grupo 2 de 2">
+              <div class="row row-cols-2 row-cols-md-4 g-3 g-lg-4">
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Snack 5</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Snack 6</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Snack 7</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+                <div class="col">
+                  <div
+                    class="product-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center text-center p-3">
+                    <span class="fw-semibold">Snack 8</span>
+                    <span class="small">Imagen pendiente</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.carousel').forEach((element) => {
+        new bootstrap.Carousel(element, {interval: false, ride: false});
+      });
+    });
+  </script>
+</body>
+
+</html>

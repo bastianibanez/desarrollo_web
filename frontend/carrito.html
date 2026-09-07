@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Finalizar compra | FitExpress</title>
+  <style>
+    .site-logo {
+      height: 28px;
+      width: auto;
+    }
+
+    header .nav {
+      --bs-nav-link-color: #2e7d32;
+      --bs-nav-link-hover-color: #173b1b;
+    }
+
+    header .nav-link:focus-visible {
+      box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
+    }
+
+    .product-placeholder {
+      width: 88px;
+      aspect-ratio: 1 / 1;
+      flex-shrink: 0;
+      background-color: #f4f7f1;
+      border: 1px solid #b5c8ae;
+      color: #47633f;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header
+      class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
+      <div class="col-auto mb-2 mb-md-0">
+        <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
+          <img class="site-logo" src="assets/img/logo-trim.png" alt="FitExpress" width="189" height="28" />
+        </a>
+      </div>
+
+      <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+        <li><a href="index.html#combos" class="nav-link px-2">Combos</a></li>
+        <li><a href="index.html#bowls" class="nav-link px-2">Bowls</a></li>
+        <li><a href="index.html#bebestibles" class="nav-link px-2">Bebestibles</a></li>
+        <li><a href="index.html#snacks" class="nav-link px-2">Snacks</a></li>
+        <li><a href="carrito.html" class="nav-link px-2 fw-semibold" aria-current="page">Carrito</a></li>
+      </ul>
+
+    </header>
+    <main class="pb-5">
+      <a href="index.html" class="link-success d-inline-block mb-4">&larr; Seguir comprando</a>
+      <div class="border rounded-3 p-3 p-md-5">
+        <h1 class="h2 text-center text-success mb-5">Finalizar compra</h1>
+        <form id="checkout-form">
+          <div class="row g-4 g-lg-5">
+            <section class="col-lg-6" aria-labelledby="delivery-title">
+              <h2 id="delivery-title" class="h4 mb-3">Completa tus datos</h2>
+              <div class="border rounded-3 p-3 p-md-4">
+                <div class="mb-4">
+                  <label for="calle" class="form-label">Calle y número</label>
+                  <input type="text" class="form-control" id="calle" name="calle" autocomplete="address-line1"
+                    placeholder="AProvidencia 1234" maxlength="150" pattern=".*\S.*" required />
+                </div>
+                <div class="mb-4">
+                  <label for="comuna" class="form-label">Comuna</label>
+                  <input type="text" class="form-control" id="comuna" name="comuna" autocomplete="address-level3"
+                    placeholder="Providencia" maxlength="150" pattern=".*\S.*" required />
+                </div>
+                <div class="mb-4">
+                  <label for="ciudad" class="form-label">Ciudad</label>
+                  <input type="text" class="form-control" id="ciudad" name="ciudad" autocomplete="address-level2"
+                    placeholder="Santiago" maxlength="150" pattern=".*\S.*" required />
+                </div>
+                <div class="mb-4">
+                  <label for="region" class="form-label">Región</label>
+                  <input type="text" class="form-control" id="region" name="region" autocomplete="address-level1"
+                    placeholder="Metropolitana" maxlength="150" pattern=".*\S.*" required />
+                </div>
+                <div>
+                  <label for="departamento" class="form-label">Departamento <span
+                      class="text-body-secondary">(opcional)</span></label>
+                  <input type="text" class="form-control" id="departamento" name="departamento"
+                    autocomplete="address-line2" placeholder="Depto. 402" maxlength="100" />
+                </div>
+              </div>
+            </section>
+            <section class="col-lg-6" aria-labelledby="order-title">
+              <h2 id="order-title" class="h4 mb-3">Resumen del pedido</h2>
+              <div class="border rounded-3 p-3 p-md-4">
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item px-0 py-4 d-flex align-items-center gap-3">
+                    <div
+                      class="product-placeholder rounded-3 d-flex align-items-center justify-content-center text-center p-2"
+                      aria-hidden="true">
+                      <span class="small">Imagen pendiente</span>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h3 class="h6 mb-1">Combo Power</h3>
+                      <p class="small text-body-secondary mb-2">Bowl, bebida de proteína y barra</p>
+                      <div class="d-flex flex-wrap justify-content-between gap-2 small">
+                        <span>Cantidad: 1</span>
+                        <span class="fw-semibold">$9.990</span>
+                      </div>
+                    </div>
+                  </li>
+                  <li class="list-group-item px-0 py-4 d-flex align-items-center gap-3">
+                    <div
+                      class="product-placeholder rounded-3 d-flex align-items-center justify-content-center text-center p-2"
+                      aria-hidden="true">
+                      <span class="small">Imagen pendiente</span>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h3 class="h6 mb-1">Bowl 1</h3>
+                      <p class="small text-body-secondary mb-2">Producto de ejemplo</p>
+                      <div class="d-flex flex-wrap justify-content-between gap-2 small">
+                        <span>Cantidad: 1</span>
+                        <span class="fw-semibold">$6.990</span>
+                      </div>
+                    </div>
+                  </li>
+                  <li class="list-group-item px-0 py-4 d-flex align-items-center gap-3">
+                    <div
+                      class="product-placeholder rounded-3 d-flex align-items-center justify-content-center text-center p-2"
+                      aria-hidden="true">
+                      <span class="small">Imagen pendiente</span>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h3 class="h6 mb-1">Snack 1</h3>
+                      <p class="small text-body-secondary mb-2">Producto de ejemplo</p>
+                      <div class="d-flex flex-wrap justify-content-between gap-2 small">
+                        <span>Cantidad: 1</span>
+                        <span class="fw-semibold">$1.990</span>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+                <dl class="mb-0 border-top pt-3">
+                  <div class="d-flex justify-content-between gap-3 mb-2">
+                    <dt class="fw-normal">Subtotal</dt>
+                    <dd class="mb-0">$18.970</dd>
+                  </div>
+                  <div class="d-flex justify-content-between gap-3 mb-3">
+                    <dt class="fw-normal">Despacho de ejemplo</dt>
+                    <dd class="mb-0">$1.990</dd>
+                  </div>
+                  <div class="d-flex justify-content-between gap-3 border-top pt-3 fs-5 fw-semibold">
+                    <dt>Total</dt>
+                    <dd class="mb-0">$20.960</dd>
+                  </div>
+                </dl>
+              </div>
+              <button type="button" class="btn btn-success btn-lg w-100 mt-4">Pagar</button>
+            </section>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+</body>
+
+</html>
