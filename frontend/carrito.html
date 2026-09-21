@@ -59,32 +59,74 @@
           <div class="row g-4 g-lg-5">
             <section class="col-lg-6" aria-labelledby="delivery-title">
               <h2 id="delivery-title" class="h4 mb-3">Completa tus datos</h2>
+
+              <div class="border rounded-3 p-3 p-md-4 mb-4">
+                <h3 class="h6 text-body-secondary mb-3">Datos del comprador</h3>
+                <div class="row g-3">
+                  <div class="col-sm-6">
+                    <label for="nombres" class="form-label">Nombres</label>
+                    <input type="text" class="form-control" id="nombres" name="nombres" autocomplete="given-name"
+                      placeholder="Ana María" maxlength="100" pattern=".*\S.*" required />
+                  </div>
+                  <div class="col-sm-6">
+                    <label for="apellidos" class="form-label">Apellidos</label>
+                    <input type="text" class="form-control" id="apellidos" name="apellidos" autocomplete="family-name"
+                      placeholder="Soto Pérez" maxlength="100" pattern=".*\S.*" required />
+                  </div>
+                  <div class="col-sm-6">
+                    <label for="rut" class="form-label">RUT</label>
+                    <input type="text" class="form-control" id="rut" name="rut" placeholder="12.345.678-5"
+                      maxlength="13" pattern=".*\S.*" required />
+                  </div>
+                  <div class="col-sm-6">
+                    <label for="telefono" class="form-label">Teléfono <span
+                        class="text-body-secondary">(opcional)</span></label>
+                    <input type="tel" class="form-control" id="telefono" name="telefono" autocomplete="tel"
+                      placeholder="+56 9 1234 5678" maxlength="20" />
+                  </div>
+                  <div class="col-12">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" autocomplete="email"
+                      placeholder="ana@correo.cl" maxlength="150" required />
+                  </div>
+                </div>
+              </div>
+
               <div class="border rounded-3 p-3 p-md-4">
-                <div class="mb-4">
-                  <label for="calle" class="form-label">Calle y número</label>
-                  <input type="text" class="form-control" id="calle" name="calle" autocomplete="address-line1"
-                    placeholder="AProvidencia 1234" maxlength="150" pattern=".*\S.*" required />
-                </div>
-                <div class="mb-4">
-                  <label for="comuna" class="form-label">Comuna</label>
-                  <input type="text" class="form-control" id="comuna" name="comuna" autocomplete="address-level3"
-                    placeholder="Providencia" maxlength="150" pattern=".*\S.*" required />
-                </div>
-                <div class="mb-4">
-                  <label for="ciudad" class="form-label">Ciudad</label>
-                  <input type="text" class="form-control" id="ciudad" name="ciudad" autocomplete="address-level2"
-                    placeholder="Santiago" maxlength="150" pattern=".*\S.*" required />
-                </div>
-                <div class="mb-4">
-                  <label for="region" class="form-label">Región</label>
-                  <input type="text" class="form-control" id="region" name="region" autocomplete="address-level1"
-                    placeholder="Metropolitana" maxlength="150" pattern=".*\S.*" required />
-                </div>
-                <div>
-                  <label for="departamento" class="form-label">Departamento <span
-                      class="text-body-secondary">(opcional)</span></label>
-                  <input type="text" class="form-control" id="departamento" name="departamento"
-                    autocomplete="address-line2" placeholder="Depto. 402" maxlength="100" />
+                <h3 class="h6 text-body-secondary mb-3">Dirección de despacho</h3>
+                <div class="row g-3">
+                  <div class="col-sm-8">
+                    <label for="calle" class="form-label">Calle</label>
+                    <input type="text" class="form-control" id="calle" name="calle" autocomplete="address-line1"
+                      placeholder="Av. Providencia" maxlength="150" pattern=".*\S.*" required />
+                  </div>
+                  <div class="col-sm-4">
+                    <label for="numero" class="form-label">Número</label>
+                    <input type="text" class="form-control" id="numero" name="numero" placeholder="1234" maxlength="20"
+                      pattern=".*\S.*" required />
+                  </div>
+                  <div class="col-sm-6">
+                    <label for="departamento" class="form-label">Departamento <span
+                        class="text-body-secondary">(opcional)</span></label>
+                    <input type="text" class="form-control" id="departamento" name="departamento"
+                      autocomplete="address-line2" placeholder="Depto. 402" maxlength="100" />
+                  </div>
+                  <div class="col-sm-6">
+                    <label for="comuna" class="form-label">Comuna</label>
+                    <select class="form-select" id="comuna" name="comuna" required>
+                      <option value="" selected disabled>Elige una comuna</option>
+                      <option value="1">Providencia</option>
+                      <option value="2">Ñuñoa</option>
+                      <option value="3">Las Condes</option>
+                      <option value="4">Santiago</option>
+                      <option value="5">La Florida</option>
+                      <option value="6">Maipú</option>
+                      <option value="7">Puente Alto</option>
+                      <option value="8">Viña del Mar</option>
+                      <option value="9">Valparaíso</option>
+                    </select>
+                    <div class="form-text">El costo de despacho depende de la comuna.</div>
+                  </div>
                 </div>
               </div>
             </section>
