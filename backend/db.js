@@ -1,6 +1,7 @@
+const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 
-const db = new DatabaseSync('tienda.db');
+const db = new DatabaseSync(path.join(__dirname, 'tienda.db'));
 
 db.exec('PRAGMA foreign_keys = ON');
 
