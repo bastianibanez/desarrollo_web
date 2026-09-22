@@ -2,3 +2,5 @@ node_modules/
 dist/
 *.db
 .DS_Store
+.venv/
+.pytest_cache/
