@@ -1,3 +1,5 @@
+from pydantic import model_validator
+from pydantic import EmailStr
 import sqlite3
 from contextlib import asynccontextmanager
 from typing import Annotated, Literal
@@ -40,6 +42,39 @@ class ProductoIn(BaseModel):
     precio: int = Field(ge=0)
     stock: int = Field(ge=0)
     categoria_id: int
+
+
+class ClienteIn(BaseModel):
+    nombres: str = Field(min_length=1)
+    apellidos: str = Field(min_length=1)
+    rut: str = Field(min_length=1)
+    email: EmailStr
+    telefono: str | None = None
+
+
+class DireccionIn(BaseModel):
+    calle: str = Field(min_length=1)
+    numero: str = Field(min_length=1)
+    departamento: str | None = None
+    comuna_id: int
+
+
+class ItemIn(BaseModel):
+    producto_id: int | None = None
+    combo_id: int | None = None
+    cantidad: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def producto_xor_combo(self):
+        if (self.producto_id is None) == (self.combo_id is None):
+            raise ValueError("Cada Item requiere product_id o combo_id (no ambos)")
+        return self
+
+
+class OrdenIn(BaseModel):
+    cliente: ClienteIn
+    direccion: DireccionIn
+    items: list[ItemIn] = Field(min_length=1)
 
 
 # === Catalogo ===
@@ -146,3 +181,112 @@ def listar_comunas(db: Db):
         ORDER BY c.nombre
     """)
     ]
+
+
+# === Ordenes ===
+
+
+def normalizar_rut(rut: str) -> str:
+    return rut.replace(".", "").upper()
+
+
+@app.post("/ordenes", status_code=201)
+def crear_orden(orden: OrdenIn, db: Db):
+    envio = db.execute(
+        "SELECT costo FROM costos_envio WHERE comuna_id = ?",
+        (orden.direccion.comuna_id,),
+    ).fetchone()
+    if envio is None:
+        raise HTTPException(400, "No hay despacho a esa comuna")
+
+    lineas = []
+    for item in orden.items:
+        if item.producto_id is not None:
+            fila = db.execute(
+                "SELECT precio FROM productos WHERE id = ?", (item.producto_id,)
+            ).fetchone()
+            if fila is None:
+                raise HTTPException(400, "Producto no existe")
+        else:
+            fila = db.execute(
+                "SELECT precio FROM combos WHERE id = ?", (item.combo_id,)
+            ).fetchone()
+            if fila is None:
+                raise HTTPException(400, "Combo no existe")
+        lineas.append((item.producto_id, item.combo_id, item.cantidad, fila["precio"]))
+
+    subtotal = sum(cantidad * precio for _, _, cantidad, precio in lineas)
+    costo_envio = envio["costo"]
+    total = subtotal + costo_envio
+    rut = normalizar_rut(orden.cliente.rut)
+
+    with db:
+        existente = db.execute(
+            "SELECT id FROM clientes WHERE rut = ?", (rut,)
+        ).fetchone()
+        if existente is None:
+            c = orden.cliente
+            cur = db.execute(
+                "INSERT INTO clientes (nombres, apellidos, rut, email, telefono) VALUES (?,?,?,?,?)",
+                (c.nombres, c.apellidos, rut, c.email, c.telefono),
+            )
+            cliente_id = cur.lastrowid
+        else:
+            cliente_id = existente["id"]
+
+        d = orden.direccion
+        cur = db.execute(
+            "INSERT INTO ordenes (cliente_id, calle, numero, departamento, comuna_id, subtotal, costo_envio, total) VALUES (?,?,?,?,?,?,?,?)",
+            (
+                cliente_id,
+                d.calle,
+                d.numero,
+                d.departamento,
+                d.comuna_id,
+                subtotal,
+                costo_envio,
+                total,
+            ),
+        )
+        orden_id = cur.lastrowid
+
+        db.executemany(
+            "INSERT INTO lineas_orden (orden_id, producto_id, combo_id, cantidad, precio_unitario) VALUES (?,?,?,?,?)",
+            [(orden_id, pid, cid, cant, precio) for pid, cid, cant, precio in lineas],
+        )
+    return {
+        "id": orden_id,
+        "subtotal": subtotal,
+        "costo_envio": costo_envio,
+        "total": total,
+    }
+
+
+@app.get("/ordenes/{id}")
+def obtener_orden(id: int, db: Db):
+    fila = db.execute(
+        """
+        SELECT o.*, cl.nombres, cl.apellidos, cl.rut, cl.email, cl.telefono, cm.nombre AS comuna
+        FROM ordenes o
+        JOIN clientes cl ON cl.id = o.cliente_id 
+        JOIN comunas cm ON cm.id = o.comuna_id
+        WHERE o.id = ?
+        """,
+        (id,),
+    ).fetchone()
+    if fila is None:
+        raise HTTPException(404, "No encontrado")
+
+    orden = dict(fila)
+    orden["lineas"] = [
+        dict(l)
+        for l in db.execute(
+            """
+            SELECT producto_id, combo_id, cantidad, precio_unitario
+            FROM lineas_orden
+            WHERE orden_id = ?
+            """,
+            (id,),
+        )
+    ]
+    return orden
