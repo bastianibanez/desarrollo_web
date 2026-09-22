@@ -1,6 +1,7 @@
 import sqlite3
 from contextlib import asynccontextmanager
 from typing import Annotated, Literal
+from pydantic import BaseModel, Field
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,6 +28,20 @@ app.add_middleware(
 Db = Annotated[sqlite3.Connection, Depends(db.get_db)]
 
 
+@app.exception_handler(sqlite3.IntegrityError)
+async def integridad(_: Request, exc: sqlite3.IntegrityError):
+    return JSONResponse({"detail": str(exc)}, status_code=409)
+
+
+# === Modelos ===
+class ProductoIn(BaseModel):
+    nombre: str = Field(min_length=1)
+    descripcion: str | None = None
+    precio: int = Field(ge=0)
+    stock: int = Field(ge=0)
+    categoria_id: int
+
+
 # === Catalogo ===
 @app.get("/categorias")
 def listar_categorias(db: Db):
@@ -50,6 +65,52 @@ def obtener_producto(id: int, db: Db):
     if fila is None:
         raise HTTPException(404, "No encontrado")
     return dict(fila)
+
+
+@app.post("/productos", status_code=201)
+def crear_producto(datos: ProductoIn, db: Db):
+    with db:
+        cur = db.execute(
+            "INSERT INTO productos (nombre, descripcion, precio, stock, categoria_id) VALUES (?, ?, ?, ?, ?)",
+            (
+                datos.nombre,
+                datos.descripcion,
+                datos.precio,
+                datos.stock,
+                datos.categoria_id,
+            ),
+        )
+    return dict(
+        db.execute("SELECT * FROM productos WHERE id = ?", (cur.lastrowid,)).fetchone()
+    )
+
+
+@app.put("/productos/{id}")
+def actualizar_producto(id: int, datos: ProductoIn, db: Db):
+    with db:
+        cur = db.execute(
+            "UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, stock = ?, categoria_id = ? WHERE id = ?",
+            (
+                datos.nombre,
+                datos.descripcion,
+                datos.precio,
+                datos.stock,
+                datos.categoria_id,
+                id,
+            ),
+        )
+    if cur.rowcount == 0:
+        raise HTTPException(404, "No encontrado")
+    return dict(db.execute("SELECT * FROM productos WHERE id = ?", (id,)).fetchone())
+
+
+@app.delete("/productos/{id}")
+def eliminar_producto(id: int, db: Db):
+    with db:
+        cur = db.execute("DELETE FROM productos WHERE id = ?", (id,))
+    if cur.rowcount == 0:
+        raise HTTPException(404, "No encontrado")
+    return {"ok": True}
 
 
 @app.get("/combos")
