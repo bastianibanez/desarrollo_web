@@ -15,8 +15,8 @@ def tests_productos_incluyen_categoria(client):
 
 def test_producto_por_id(client):
     p = client.get("/productos/1").json()
-    assert p["nombre" == "Bowl Quinoa"]
-    assert p["precio" == 6990]
+    assert p["nombre"] == "Bowl Quinoa"
+    assert p["precio"] == 6990
     assert "created_at" in p and "updated_at" in p
 
 
