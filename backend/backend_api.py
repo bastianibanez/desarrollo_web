@@ -60,7 +60,7 @@ def listar_categorias(db: Db):
     return [dict(f) for f in db.execute("SELECT * FROM categorias ORDER BY nombre")]
 
 
-@app.get("/productos")
+@app.get("/productos", dependencies=[Depends(verify_gateway)])
 def listar_productos(db: Db):
     filas = db.execute("""
         SELECT p.*, c.nombre AS categoria
