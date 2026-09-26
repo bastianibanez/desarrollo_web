@@ -6,7 +6,19 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from modelos import ProductoIn, ClienteIn, DireccionIn, ItemIn, OrdenIn
+from modelos import (
+    ProductoIn,
+    ClienteIn,
+    DireccionIn,
+    ItemIn,
+    OrdenIn,
+    CategoriaOut,
+    ProductoOut,
+    ComboOut,
+    ComunaOut,
+    OrdenCreadaOut,
+    OrdenOut,
+)
 import db
 
 logger = logging.getLogger(__name__)
@@ -41,26 +53,34 @@ async def integridad(request: Request, exc: sqlite3.IntegrityError):
 # === Catalogo ===
 @app.get("/categorias")
 def listar_categorias(db: Db):
-    return [dict(f) for f in db.execute("SELECT * FROM categorias ORDER BY nombre")]
+    return [
+        CategoriaOut(**f) for f in db.execute("SELECT * FROM categorias ORDER BY nombre")
+    ]
+
+
+SELECT_PRODUCTO = """
+    SELECT p.*, c.nombre AS categoria
+    FROM productos p
+    JOIN categorias c ON c.id = p.categoria_id
+"""
+
+
+def buscar_producto(db: sqlite3.Connection, id: int) -> sqlite3.Row | None:
+    return db.execute(SELECT_PRODUCTO + " WHERE p.id = ?", (id,)).fetchone()
 
 
 @app.get("/productos")
 def listar_productos(db: Db):
-    filas = db.execute("""
-        SELECT p.*, c.nombre AS categoria
-        FROM productos p
-        JOIN categorias c ON c.id = p.categoria_id
-        ORDER BY p.nombre
-    """)
-    return [dict(f) for f in filas]
+    filas = db.execute(SELECT_PRODUCTO + " ORDER BY p.nombre")
+    return [ProductoOut(**f) for f in filas]
 
 
 @app.get("/productos/{id}")
 def obtener_producto(id: int, db: Db):
-    fila = db.execute("SELECT * FROM productos WHERE id = ?", (id,)).fetchone()
+    fila = buscar_producto(db, id)
     if fila is None:
         raise HTTPException(404, "No encontrado")
-    return dict(fila)
+    return ProductoOut(**fila)
 
 
 def validar_categoria(db: sqlite3.Connection, categoria_id: int) -> None:
@@ -85,9 +105,7 @@ def crear_producto(datos: ProductoIn, db: Db):
                 datos.categoria_id,
             ),
         )
-    return dict(
-        db.execute("SELECT * FROM productos WHERE id = ?", (cur.lastrowid,)).fetchone()
-    )
+    return ProductoOut(**buscar_producto(db, cur.lastrowid))
 
 
 @app.put("/productos/{id}")
@@ -107,7 +125,7 @@ def actualizar_producto(id: int, datos: ProductoIn, db: Db):
         )
     if cur.rowcount == 0:
         raise HTTPException(404, "No encontrado")
-    return dict(db.execute("SELECT * FROM productos WHERE id = ?", (id,)).fetchone())
+    return ProductoOut(**buscar_producto(db, id))
 
 
 @app.delete("/productos/{id}")
@@ -136,7 +154,7 @@ def listar_combos(db: Db):
                 (combo["id"],),
             )
         ]
-        resultado.append(combo)
+        resultado.append(ComboOut(**combo))
     return resultado
 
 
@@ -144,7 +162,7 @@ def listar_combos(db: Db):
 @app.get("/comunas")
 def listar_comunas(db: Db):
     return [
-        dict(f)
+        ComunaOut(**f)
         for f in db.execute("""
         SELECT c.id, c.nombre, c.ciudad, c.region, e.costo AS costo_envio
         FROM comunas c
@@ -225,12 +243,9 @@ def crear_orden(orden: OrdenIn, db: Db):
             "INSERT INTO lineas_orden (orden_id, producto_id, combo_id, cantidad, precio_unitario) VALUES (?,?,?,?,?)",
             [(orden_id, pid, cid, cant, precio) for pid, cid, cant, precio in lineas],
         )
-    return {
-        "id": orden_id,
-        "subtotal": subtotal,
-        "costo_envio": costo_envio,
-        "total": total,
-    }
+    return OrdenCreadaOut(
+        id=orden_id, subtotal=subtotal, costo_envio=costo_envio, total=total
+    )
 
 
 @app.get("/ordenes/{id}")
@@ -260,4 +275,4 @@ def obtener_orden(id: int, db: Db):
             (id,),
         )
     ]
-    return orden
+    return OrdenOut(**orden)

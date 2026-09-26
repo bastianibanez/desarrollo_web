@@ -14,7 +14,7 @@ CLIENTE = {
 @pytest.fixture(scope="session")
 def client(tmp_path_factory):
     os.environ["TIENDA_DB"] = str(tmp_path_factory.mktemp("db") / "test.db")
-    from main import app
+    from backend_api import app
 
     with TestClient(app) as c:
         yield c
