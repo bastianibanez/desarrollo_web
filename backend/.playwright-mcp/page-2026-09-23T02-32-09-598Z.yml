@@ -1,0 +1,51 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - heading "Bloques nuevos" [level=1] [ref=f1e3]
+    - heading "Diagrama" [level=2] [ref=f1e4]
+    - document [ref=f1e6]:
+      - generic [ref=f1e9]:
+        - paragraph [ref=f1e16]: .md del plan
+        - paragraph [ref=f1e23]: parser.py
+        - paragraph [ref=f1e30]: IR
+        - paragraph [ref=f1e37]: emit.py
+        - paragraph [ref=f1e44]: HTML
+    - heading "Pasos" [level=2] [ref=f1e45]
+    - list [ref=f1e46]:
+      - listitem [ref=f1e47]:
+        - paragraph [ref=f1e48]:
+          - text: Escribir el
+          - code [ref=f1e49]: .md
+          - text: del plan en
+          - code [ref=f1e50]: /tmp
+          - text: . Compilar con
+          - code [ref=f1e51]: build.py --mode a
+          - text: .
+      - listitem [ref=f1e52]:
+        - code [ref=f1e54]: open /tmp/plan.html
+      - listitem [ref=f1e55]:
+        - paragraph [ref=f1e56]: Revisar y copiar las respuestas.
+    - heading "Imagen" [level=2] [ref=f1e57]
+    - paragraph [ref=f1e58]:
+      - img "Muestra de color" [ref=f1e59]
+    - generic [ref=f1e60]: Un PNG generado al vuelo
+    - paragraph
+    - heading "Colapsable" [level=2] [ref=f1e61]
+    - group [ref=f1e62]:
+      - generic "▸Ver el detalle largo" [ref=f1e63] [cursor=pointer]
+    - heading "SVG inline" [level=2] [ref=f1e64]
+    - img [ref=f1e66]:
+      - generic [ref=f1e68]: SVG
+    - heading "❓ Preguntas pendientes" [level=2] [ref=f1e69]
+    - paragraph [ref=f1e70]: Responde lo que quieras; lo vacío se omite. Al final, el botón copia tus respuestas para pegarlas en la sesión.
+    - generic [ref=f1e72]:
+      - generic [ref=f1e73]: ¿Sirve?
+      - generic [ref=f1e74] [cursor=pointer]:
+        - radio "sí · recomendado" [ref=f1e75]
+        - generic [ref=f1e76]: sí · recomendado
+      - generic [ref=f1e77] [cursor=pointer]:
+        - radio "no" [ref=f1e78]
+        - generic [ref=f1e79]: "no"
+  - generic [ref=f1e80]:
+    - button "📋 Copiar selecciones para pegar en la sesión" [ref=f1e81] [cursor=pointer]
+    - button "Limpiar" [ref=f1e82] [cursor=pointer]
+    - generic [ref=f1e83]: Sin copiar todavía.

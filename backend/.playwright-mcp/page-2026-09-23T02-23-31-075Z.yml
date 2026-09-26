@@ -1,0 +1,25 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - heading "Casos" [level=2] [ref=e3]
+    - paragraph [ref=e4]: Prosa.
+    - heading "❓ Preguntas pendientes" [level=2] [ref=e5]
+    - paragraph [ref=e6]: Responde lo que quieras; lo vacío se omite. Al final, el botón copia tus respuestas para pegarlas en la sesión.
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]: ¿Elige uno?
+        - generic [ref=e10] [cursor=pointer]:
+          - radio "uno · recomendado" [ref=e11]
+          - generic [ref=e12]: uno · recomendado
+        - generic [ref=e13] [cursor=pointer]:
+          - radio "dos" [ref=e14]
+          - generic [ref=e15]: dos
+      - generic [ref=e16]:
+        - generic [ref=e17]: ¿Qué ruta?
+        - textbox "C:\\temp" [ref=e18]
+      - generic [ref=e19]:
+        - generic [ref=e20]: Notas
+        - textbox [ref=e21]
+  - generic [ref=e22]:
+    - button "📋 Copiar selecciones para pegar en la sesión" [ref=e23] [cursor=pointer]
+    - button "Limpiar" [ref=e24] [cursor=pointer]
+    - generic [ref=e25]: Sin copiar todavía.
