@@ -45,5 +45,11 @@ def test_no_se_puede_borrar_producto_en_combo(client):
     # El producto 1 (Bowl Quinoa) está en el Combo Almuerzo → la FK lo impide
     r = client.delete("/productos/1")
     assert r.status_code == 409
-    assert "FOREIGN KEY" in r.json()["detail"]
+    assert r.json()["detail"] == "Conflicto con datos existentes"
     assert client.get("/productos/1").status_code == 200  # sigue existiendo
+
+
+def test_categoria_inexistente_400(client):
+    r = client.post("/productos", json={**NUEVO, "categoria_id": 999})
+    assert r.status_code == 400
+    assert r.json()["detail"] == "Categoría no existe"

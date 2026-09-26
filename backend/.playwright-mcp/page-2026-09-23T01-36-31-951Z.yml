@@ -1,0 +1,107 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - heading "Catálogo v1" [level=1] [ref=e4]
+      - paragraph [ref=e5]:
+        - text: Prosa con
+        - code [ref=e6]: código
+        - text: ","
+        - strong [ref=e7]: negrita
+        - text: ","
+        - emphasis [ref=e8]: itálica
+        - text: y un
+        - link "link" [ref=e9] [cursor=pointer]:
+          - /url: https://a.cl?x=1&y=2
+        - text: .
+      - paragraph [ref=e10]:
+        - generic [ref=e11]: Causa raíz
+        - generic [ref=e12]: Fase 1
+        - generic [ref=e13]: Fase 2
+        - generic [ref=e14]: Fase 3
+      - heading "Sección con badge Fase 2 · 3d" [level=2] [ref=e15]:
+        - text: Sección con badge
+        - generic [ref=e16]: Fase 2 · 3d
+      - list [ref=e17]:
+        - listitem [ref=e18]: item uno
+        - listitem [ref=e19]:
+          - text: item dos con
+          - code [ref=e20]: code
+      - list [ref=e21]:
+        - listitem [ref=e22]: paso uno
+        - listitem [ref=e23]: paso dos
+      - table [ref=e24]:
+        - rowgroup [ref=e25]:
+          - row [ref=e26]:
+            - columnheader "Campo" [ref=e27]
+            - columnheader "Tipo" [ref=e28]
+            - columnheader "Nota" [ref=e29]
+        - rowgroup [ref=e30]:
+          - row [ref=e31]:
+            - cell [ref=e32]:
+              - code [ref=e33]: id
+            - cell "uuid" [ref=e34]
+            - cell "PK" [ref=e35]
+          - row [ref=e36]:
+            - cell [ref=e37]:
+              - code [ref=e38]: state
+            - cell "enum" [ref=e39]
+            - cell "dispatched → done" [ref=e40]
+      - generic [ref=e41]: reaper.py
+      - code [ref=e43]: "async def reap(conn, ttl=90): await conn.execute(SQL, ttl)"
+      - code [ref=e45]: <div class="q" data-type="radio">&amp; <script>alert(1)</script></div>
+      - blockquote [ref=e46]:
+        - text: ⚠️
+        - paragraph [ref=e47]:
+          - strong [ref=e48]: Ojo
+          - text: El path de la DB debe ser absoluto.
+      - blockquote [ref=e49]:
+        - text: 🔑
+        - paragraph [ref=e50]: Dato clave sin título.
+      - heading "Comparación" [level=3] [ref=e51]
+      - generic [ref=e52]:
+        - generic [ref=e53]:
+          - heading "In-process" [level=4] [ref=e54]
+          - paragraph [ref=e55]: Cero infra nueva.
+          - list [ref=e56]:
+            - listitem [ref=e57]: simple
+            - listitem [ref=e58]: acoplado
+        - generic [ref=e59]:
+          - heading "Cloud Scheduler" [level=4] [ref=e60]
+          - paragraph [ref=e61]: Infra extra.
+          - paragraph [ref=e62]:
+            - generic [ref=e63]: Fase 3
+      - separator [ref=e64]
+    - heading "❓ Preguntas pendientes" [level=2] [ref=e65]
+    - paragraph [ref=e66]: Respondé lo que quieras; lo vacío se omite. Al final, el botón copia tus respuestas para pegarlas en la sesión.
+    - generic [ref=e67]:
+      - generic [ref=e68]:
+        - generic [ref=e69]: ¿Cómo disparamos el reaper?
+        - text: Decisión de infra principal.
+        - generic [ref=e70] [cursor=pointer]:
+          - radio "Loop asyncio in-process · recomendado Cero infra nueva." [ref=e71]
+          - generic [ref=e72]: Loop asyncio in-process · recomendadoCero infra nueva.
+        - generic [ref=e73] [cursor=pointer]:
+          - radio "Cloud Scheduler Endpoint HTTP + job externo." [ref=e74]
+          - generic [ref=e75]: Cloud SchedulerEndpoint HTTP + job externo.
+      - generic [ref=e76]:
+        - generic [ref=e77]: ¿Qué entra en la Fase 2?
+        - generic [ref=e78] [cursor=pointer]:
+          - checkbox "Dockerfiles exec + timeout" [ref=e79]
+          - generic [ref=e80]: Dockerfiles exec + timeout
+        - generic [ref=e81] [cursor=pointer]:
+          - checkbox "Drain cancel-aware" [ref=e82]
+          - generic [ref=e83]: Drain cancel-aware
+        - generic [ref=e84] [cursor=pointer]:
+          - checkbox "Métricas" [ref=e85]
+          - generic [ref=e86]: Métricas
+      - generic [ref=e87]:
+        - generic [ref=e88]: Timeout para fila atascada
+        - text: "Default propuesto: 90s."
+        - 'textbox "ej: 90s" [ref=e89]'
+      - generic [ref=e90]:
+        - generic [ref=e91]: Notas o cambios al plan
+        - textbox "Ajustes o contexto…" [ref=e92]
+  - generic [ref=e93]:
+    - button "📋 Copiar selecciones para pegar en la sesión" [ref=e94] [cursor=pointer]
+    - button "Limpiar" [ref=e95] [cursor=pointer]
+    - generic [ref=e96]: Sin copiar todavía.
