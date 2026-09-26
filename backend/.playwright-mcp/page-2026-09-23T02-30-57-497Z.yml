@@ -1,0 +1,7 @@
+- document [ref=e3]:
+  - generic [ref=e6]:
+    - paragraph [ref=e13]: .md del plan
+    - paragraph [ref=e20]: parser.py
+    - paragraph [ref=e27]: IR
+    - paragraph [ref=e34]: emit.py
+    - paragraph [ref=e41]: HTML autocontenido

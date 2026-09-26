@@ -1,0 +1,318 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - heading [level=1] [ref=e3]:
+      - text: Migrar
+      - code [ref=e4]: study-guide
+      - text: al motor de bloques
+    - paragraph [ref=e5]:
+      - code [ref=e6]: html-plan
+      - text: "ya no escribe HTML: escribe un"
+      - code [ref=e7]: .md
+      - text: que un compilador convierte, con validación y errores ruidosos.
+      - code [ref=e8]: study-guide
+      - text: sigue en el modelo viejo, y tiene el contrato de bloques
+      - strong [ref=e9]: más pesado
+      - text: "de tu directorio de skills: secciones con índice y progreso, cheatsheets, tablas,"
+      - code [ref=e10]: figure.code
+      - text: con caption, cuatro tipos de callout, ejercicios con solución revelable y quiz con corrección automática. Es el candidato obvio para el mismo tratamiento.
+    - paragraph [ref=e11]:
+      - generic [ref=e12]: Riesgo
+      - generic [ref=e13]: Fase 1
+      - generic [ref=e14]: Fase 2
+      - generic [ref=e15]: Fase 3
+    - heading "1. Por qué vale la pena ROOT" [level=2] [ref=e16]:
+      - text: 1. Por qué vale la pena
+      - generic [ref=e17]: ROOT
+    - paragraph [ref=e18]:
+      - text: El bake-off midió que escribir HTML a mano cuesta
+      - strong [ref=e19]: 25% más tokens de output
+      - text: que escribir el
+      - code [ref=e20]: .md
+      - text: "equivalente, con rangos que no se solapan. Los números que decidieron esa adopción:"
+    - paragraph [ref=e21]:
+      - img "Tokens de output por brazo" [ref=e22]
+    - generic [ref=e23]: Medido sobre 8 corridas, 2 por brazo, mismo brief
+    - paragraph
+    - paragraph [ref=e24]:
+      - code [ref=e25]: study-guide
+      - text: es un caso
+      - strong [ref=e26]: peor
+      - text: que
+      - code [ref=e27]: html-plan
+      - text: ": su HTML por unidad de contenido es más denso — cada ejercicio son 8 líneas de markup, cada quiz son 11 — así que el ahorro debería ser mayor, no menor."
+    - blockquote [ref=e28]:
+      - text: ⚠️
+      - paragraph [ref=e29]:
+        - strong [ref=e30]: Lo que no se puede asumir
+        - text: El 25% se midió sobre planes, no sobre guías de estudio. Un quiz tiene más markup por palabra visible que un párrafo, así que el ahorro
+        - emphasis [ref=e31]: debería
+        - text: ser mayor, pero eso es una hipótesis hasta que se mida. La Fase 3 la pone a prueba.
+    - heading "2. Qué comparte y qué no P1" [level=2] [ref=e32]:
+      - text: 2. Qué comparte y qué no
+      - generic [ref=e33]: P1
+    - paragraph [ref=e34]:
+      - text: El motor actual ya cubre buena parte del contrato de
+      - code [ref=e35]: study-guide
+      - text: ":"
+    - table [ref=e36]:
+      - rowgroup [ref=e37]:
+        - row [ref=e38]:
+          - columnheader "Bloque de study-guide" [ref=e39]
+          - columnheader "¿Existe hoy?" [ref=e40]
+          - columnheader "Qué falta" [ref=e41]
+      - rowgroup [ref=e42]:
+        - row [ref=e43]:
+          - cell [ref=e44]:
+            - code [ref=e45]: section.sec
+            - text: con
+            - code [ref=e46]: data-accent
+            - text: "y"
+            - code [ref=e47]: data-toc
+          - cell "no" [ref=e48]
+          - cell "contenedor con índice y progreso" [ref=e49]
+        - row [ref=e50]:
+          - cell [ref=e51]:
+            - code [ref=e52]: ul.keys
+            - text: (cheatsheet)
+          - cell "parcial" [ref=e53]
+          - cell [ref=e54]:
+            - text: variante de
+            - code [ref=e55]: ul
+            - text: con check de color
+        - row [ref=e56]:
+          - cell [ref=e57]:
+            - code [ref=e58]: div.tbl > table
+          - cell "sí" [ref=e59]
+          - cell "solo el wrapper" [ref=e60]
+        - row [ref=e61]:
+          - cell [ref=e62]:
+            - code [ref=e63]: figure.code
+            - text: con
+            - code [ref=e64]: figcaption
+          - cell "sí" [ref=e65]
+          - cell [ref=e66]:
+            - code [ref=e67]: code
+            - text: ya tiene
+            - code [ref=e68]: cap
+        - row [ref=e69]:
+          - cell [ref=e70]:
+            - code [ref=e71]: .note note-info/key/tip/warn
+          - cell "sí" [ref=e72]
+          - cell [ref=e73]:
+            - code [ref=e74]: note
+            - text: ya tiene los 4 tipos
+        - row [ref=e75]:
+          - cell [ref=e76]:
+            - code [ref=e77]: .ex
+            - text: con
+            - code [ref=e78]: .ex-sol
+            - text: revelable
+          - cell "no" [ref=e79]
+          - cell [ref=e80]:
+            - text: primo de
+            - code [ref=e81]: details
+        - row [ref=e82]:
+          - cell [ref=e83]:
+            - code [ref=e84]: .quiz
+            - text: con
+            - code [ref=e85]: data-answer
+          - cell "no" [ref=e86]
+          - cell "bloque nuevo con JS propio" [ref=e87]
+    - blockquote [ref=e88]:
+      - text: ✅
+      - paragraph [ref=e89]:
+        - strong [ref=e90]: Dos de siete ya están
+        - code [ref=e91]: code
+        - text: con caption y los cuatro callouts salen gratis. El wrapper de tabla es una línea de CSS. El trabajo real son las secciones, los ejercicios y el quiz.
+    - heading "3. Cómo se ve la migración P1" [level=2] [ref=e92]:
+      - text: 3. Cómo se ve la migración
+      - generic [ref=e93]: P1
+    - document [ref=e95]:
+      - generic [ref=e97]:
+        - generic [ref=e103]:
+          - paragraph [ref=e109]: html-plan
+          - paragraph [ref=e115]: study-guide
+        - generic [ref=e116]:
+          - paragraph [ref=e123]: guia.md del autor
+          - paragraph [ref=e130]: parser.pygramatica compartida
+          - paragraph [ref=e137]: IR tipado
+          - paragraph [ref=e144]: que skill?
+          - paragraph [ref=e151]: emit.pybloques de plan
+          - paragraph [ref=e158]: emit_guide.py+ seccion, ejercicio, quiz
+          - paragraph [ref=e165]: template.html
+          - paragraph [ref=e172]: template-guide.html
+          - paragraph [ref=e179]: HTML autocontenido
+    - paragraph [ref=e180]: "La decisión de arquitectura es dónde poner la frontera:"
+    - generic [ref=e181]:
+      - generic [ref=e182]:
+        - heading [level=4] [ref=e183]:
+          - text: Motor compartido
+          - code [ref=e184]: html-blocks
+        - paragraph [ref=e185]: El parser, el IR y los bloques comunes salen a un directorio propio; cada skill aporta sus emisores. Una sola gramática que aprender.
+        - list [ref=e186]:
+          - listitem [ref=e187]: más trabajo inicial
+          - listitem [ref=e188]: un cambio en el parser beneficia a los dos
+      - generic [ref=e189]:
+        - heading "Copiar el motor a study-guide" [level=4] [ref=e190]
+        - paragraph [ref=e191]: Cada skill se queda con su copia y diverge libremente. Cero coordinación.
+        - list [ref=e192]:
+          - listitem [ref=e193]: rápido hoy
+          - listitem [ref=e194]: dos parsers que arreglar cada vez
+    - blockquote [ref=e195]:
+      - text: 🔑
+      - paragraph [ref=e196]:
+        - strong [ref=e197]: El disparador que ya está escrito
+        - text: "En el lab quedó anotado:"
+        - emphasis [ref=e198]:
+          - text: "\"cuando un segundo skill adopte el IR, mover"
+          - code [ref=e199]: lib/
+          - text: a un directorio compartido"
+        - text: . Ese segundo skill es este. El disparador se cumplió.
+    - heading "4. Plan de ejecución P2" [level=2] [ref=e200]:
+      - text: 4. Plan de ejecución
+      - generic [ref=e201]: P2
+    - list [ref=e202]:
+      - listitem [ref=e203]:
+        - paragraph [ref=e204]:
+          - text: Extraer
+          - code [ref=e205]: inline.py
+          - text: ","
+          - code [ref=e206]: ir.py
+          - text: "y"
+          - code [ref=e207]: parser.py
+          - text: a un motor compartido, dejando
+          - code [ref=e208]: emit.py
+          - text: por skill. Verificar que
+          - code [ref=e209]: html-plan
+          - text: sigue compilando
+          - strong [ref=e210]: byte a byte igual
+          - text: — el corpus de planes ya existe.
+      - listitem [ref=e211]:
+        - paragraph [ref=e212]:
+          - text: "Agregar los tres bloques que faltan al IR y al parser:"
+          - code [ref=e213]: section
+          - text: con accent y TOC,
+          - code [ref=e214]: exercise
+          - text: con solución revelable,
+          - code [ref=e215]: quiz
+          - text: con respuesta correcta y explicación.
+      - listitem [ref=e216]:
+        - paragraph [ref=e217]:
+          - text: Escribir
+          - code [ref=e218]: emit_guide.py
+          - text: y adaptar
+          - code [ref=e219]: validate.py
+          - text: "con los checks propios de la guía: que cada"
+          - code [ref=e220]: .quiz
+          - text: tenga
+          - code [ref=e221]: data-answer
+          - text: dentro de rango, que toda
+          - code [ref=e222]: .sec
+          - text: tenga
+          - code [ref=e223]: data-toc
+          - text: ", que el JS de progreso siga intacto."
+      - listitem [ref=e224]:
+        - code [ref=e226]: python3 bin/build.py --mode guide --in /tmp/guia.md --out /tmp/guia.html && open /tmp/guia.html
+      - listitem [ref=e227]:
+        - paragraph [ref=e228]:
+          - text: Reescribir el
+          - code [ref=e229]: SKILL.md
+          - text: de
+          - code [ref=e230]: study-guide
+          - text: con la sintaxis nueva, en español neutro, y medir una guía real contra su versión hecha a mano.
+    - heading "5. El riesgo real P3" [level=2] [ref=e231]:
+      - text: 5. El riesgo real
+      - generic [ref=e232]: P3
+    - paragraph [ref=e233]:
+      - text: El quiz y el ejercicio
+      - strong [ref=e234]: tienen JavaScript propio
+      - text: en el template de
+      - code [ref=e235]: study-guide
+      - text: ": revelar soluciones, corregir respuestas, pintar la correcta en verde. Ese JS lee el DOM por clases y"
+      - code [ref=e236]: data-*
+      - text: ", igual que el botón de copiado de"
+      - code [ref=e237]: html-plan
+      - text: .
+    - generic [ref=e238]: el-contrato-que-no-se-puede-romper
+    - code [ref=e240]: "// study-guide: el JS corrige leyendo data-answer del contenedor document.querySelectorAll(\".quiz\").forEach(q => { const correcta = parseInt(q.dataset.answer, 10); // ...marca .opt[correcta] en verde y muestra .quiz-fb });"
+    - blockquote [ref=e241]:
+      - text: ⚠️
+      - paragraph [ref=e242]:
+        - strong [ref=e243]: Aprendido a los golpes en html-plan
+        - text: Dos preguntas con el mismo
+        - code [ref=e244]: name
+        - text: se fusionaban en el navegador y perdían una respuesta
+        - strong [ref=e245]: sin ningún aviso
+        - text: . Nadie lo detectaba. El validador del motor nuevo lo encontró de inmediato. En
+        - code [ref=e246]: study-guide
+        - text: el equivalente es un
+        - code [ref=e247]: data-answer
+        - text: "fuera de rango: el quiz queda sin respuesta correcta y el alumno nunca acierta. Hay que validarlo desde el primer día."
+    - group [ref=e248]:
+      - generic "▸Apéndice — el contrato completo de study-guide, para referencia" [ref=e249] [cursor=pointer]
+    - img [ref=e251]:
+      - generic [ref=e253]: html-plan ✓ migrado
+      - generic [ref=e256]: study-guide ← acá
+      - generic [ref=e258]: ¿otros?
+    - heading "6. Preguntas pendientes" [level=2] [ref=e259]
+    - heading "❓ Preguntas pendientes" [level=2] [ref=e260]
+    - paragraph [ref=e261]: Responde lo que quieras; lo vacío se omite. Al final, el botón copia tus respuestas para pegarlas en la sesión.
+    - generic [ref=e262]:
+      - generic [ref=e263]:
+        - generic [ref=e264]: ¿Motor compartido o copia por skill?
+        - text: Es la decisión estructural; el resto del plan depende de ella.
+        - generic [ref=e265] [cursor=pointer]:
+          - 'radio "html-blocks compartido · recomendado El disparador que dejamos escrito ya se cumplió: hay un segundo consumidor." [ref=e266]'
+          - generic [ref=e267]: "html-blocks compartido · recomendadoEl disparador que dejamos escrito ya se cumplió: hay un segundo consumidor."
+        - generic [ref=e268] [cursor=pointer]:
+          - radio "Copiar a study-guide Cero coordinación hoy, dos parsers que mantener después." [ref=e269]
+          - generic [ref=e270]: Copiar a study-guideCero coordinación hoy, dos parsers que mantener después.
+        - generic [ref=e271] [cursor=pointer]:
+          - radio "Dejarlo en html-plan e importar desde ahí Sin directorio nuevo, pero study-guide queda dependiendo de un skill hermano." [ref=e272]
+          - generic [ref=e273]: Dejarlo en html-plan e importar desde ahíSin directorio nuevo, pero study-guide queda dependiendo de un skill hermano.
+      - generic [ref=e274]:
+        - generic [ref=e275]: ¿Cuáles entran?
+        - text: Los que no marques quedan fuera del alcance y study-guide seguiría escribiéndolos a mano.
+        - generic [ref=e276] [cursor=pointer]:
+          - checkbox "Secciones con índice y barra de progreso" [ref=e277]
+          - generic [ref=e278]: Secciones con índice y barra de progreso
+        - generic [ref=e279] [cursor=pointer]:
+          - checkbox "Ejercicios con botón de revelar" [ref=e280]
+          - generic [ref=e281]: Ejercicios con botón de revelar
+        - generic [ref=e282] [cursor=pointer]:
+          - checkbox "Quiz autocorregible con data-answer" [ref=e283]
+          - generic [ref=e284]: Quiz autocorregible con data-answer
+        - generic [ref=e285] [cursor=pointer]:
+          - checkbox "Cheatsheet con viñeta de color" [ref=e286]
+          - generic [ref=e287]: Cheatsheet con viñeta de color
+      - generic [ref=e288]:
+        - generic [ref=e289]: ¿Se vuelve a medir el ahorro?
+        - text: El 25% se midió sobre planes; una guía tiene más markup por palabra.
+        - generic [ref=e290] [cursor=pointer]:
+          - radio "Una sola corrida comparativa · recomendado Suficiente para confirmar la dirección sin montar otro bake-off." [ref=e291]
+          - generic [ref=e292]: Una sola corrida comparativa · recomendadoSuficiente para confirmar la dirección sin montar otro bake-off.
+        - generic [ref=e293] [cursor=pointer]:
+          - radio "El bake-off completo otra vez Probes, réplicas y análisis de sensibilidad." [ref=e294]
+          - generic [ref=e295]: El bake-off completo otra vezProbes, réplicas y análisis de sensibilidad.
+        - generic [ref=e296] [cursor=pointer]:
+          - radio "No medir, asumir que aplica Más rápido, pero sin evidencia de que el ahorro se traslada." [ref=e297]
+          - generic [ref=e298]: No medir, asumir que aplicaMás rápido, pero sin evidencia de que el ahorro se traslada.
+      - generic [ref=e299]:
+        - generic [ref=e300]: Si el motor sale a un directorio propio, ¿cómo se llama?
+        - text: "Propuesto: html-blocks"
+        - 'textbox "ej: html-blocks" [ref=e301]'
+      - generic [ref=e302]:
+        - generic [ref=e303]: Las guías ya generadas en HTML, ¿se tocan?
+        - generic [ref=e304] [cursor=pointer]:
+          - radio "Se dejan como están · recomendado Son artefactos de /tmp; se regeneran si hacen falta." [ref=e305]
+          - generic [ref=e306]: Se dejan como están · recomendadoSon artefactos de /tmp; se regeneran si hacen falta.
+        - generic [ref=e307] [cursor=pointer]:
+          - radio "Se reescriben sus fuentes al formato nuevo Solo tiene sentido si guardas las guías en algún repo." [ref=e308]
+          - generic [ref=e309]: Se reescriben sus fuentes al formato nuevoSolo tiene sentido si guardas las guías en algún repo.
+      - generic [ref=e310]:
+        - generic [ref=e311]: Ajustes al plan, dudas o cosas que falten
+        - textbox "Lo que no encaje en las preguntas de arriba…" [ref=e312]
+  - generic [ref=e313]:
+    - button "📋 Copiar selecciones para pegar en la sesión" [ref=e314] [cursor=pointer]
+    - button "Limpiar" [ref=e315] [cursor=pointer]
+    - generic [ref=e316]: Sin copiar todavía.

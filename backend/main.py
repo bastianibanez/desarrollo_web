@@ -1,18 +1,20 @@
-from pydantic import model_validator
-from pydantic import EmailStr
+import logging
 import sqlite3
 from contextlib import asynccontextmanager
-from typing import Annotated, Literal
-from pydantic import BaseModel, Field
+from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 import db
 
+logger = logging.getLogger(__name__)
+
 
 # === App ===
+@asynccontextmanager
 async def lifespan(_: FastAPI):
     db.inicializar()
     yield
@@ -31,8 +33,10 @@ Db = Annotated[sqlite3.Connection, Depends(db.get_db)]
 
 
 @app.exception_handler(sqlite3.IntegrityError)
-async def integridad(_: Request, exc: sqlite3.IntegrityError):
-    return JSONResponse({"detail": str(exc)}, status_code=409)
+async def integridad(request: Request, exc: sqlite3.IntegrityError):
+    # El mensaje de SQLite expone el esquema: se registra acá y al cliente va uno genérico
+    logger.warning("IntegrityError en %s %s: %s", request.method, request.url.path, exc)
+    return JSONResponse({"detail": "Conflicto con datos existentes"}, status_code=409)
 
 
 # === Modelos ===
@@ -67,7 +71,7 @@ class ItemIn(BaseModel):
     @model_validator(mode="after")
     def producto_xor_combo(self):
         if (self.producto_id is None) == (self.combo_id is None):
-            raise ValueError("Cada Item requiere product_id o combo_id (no ambos)")
+            raise ValueError("Cada item requiere producto_id o combo_id (no ambos)")
         return self
 
 
@@ -102,8 +106,17 @@ def obtener_producto(id: int, db: Db):
     return dict(fila)
 
 
+def validar_categoria(db: sqlite3.Connection, categoria_id: int) -> None:
+    if (
+        db.execute("SELECT 1 FROM categorias WHERE id = ?", (categoria_id,)).fetchone()
+        is None
+    ):
+        raise HTTPException(400, "Categoría no existe")
+
+
 @app.post("/productos", status_code=201)
 def crear_producto(datos: ProductoIn, db: Db):
+    validar_categoria(db, datos.categoria_id)
     with db:
         cur = db.execute(
             "INSERT INTO productos (nombre, descripcion, precio, stock, categoria_id) VALUES (?, ?, ?, ?, ?)",
@@ -122,6 +135,7 @@ def crear_producto(datos: ProductoIn, db: Db):
 
 @app.put("/productos/{id}")
 def actualizar_producto(id: int, datos: ProductoIn, db: Db):
+    validar_categoria(db, datos.categoria_id)
     with db:
         cur = db.execute(
             "UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, stock = ?, categoria_id = ? WHERE id = ?",
