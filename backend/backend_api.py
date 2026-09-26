@@ -6,8 +6,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, EmailStr, Field, model_validator
-
+from modelos import ProductoIn, ClienteIn, DireccionIn, ItemIn, OrdenIn
 import db
 
 logger = logging.getLogger(__name__)
