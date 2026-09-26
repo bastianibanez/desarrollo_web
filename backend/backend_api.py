@@ -1,27 +1,31 @@
+import secrets
 import logging
 import sqlite3
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from modelos import (
-    ProductoIn,
-    ClienteIn,
-    DireccionIn,
-    ItemIn,
-    OrdenIn,
-    CategoriaOut,
-    ProductoOut,
-    ComboOut,
-    ComunaOut,
-    OrdenCreadaOut,
-    OrdenOut,
-)
+from modelos import ProductoIn, ClienteIn, DireccionIn, ItemIn, OrdenIn
 import db
+import os
 
 logger = logging.getLogger(__name__)
+
+INTERNAL_GATEWAY_SECRET = os.getenv("INTERNAL_GATEWAY_SECRET", None)
+
+if INTERNAL_GATEWAY_SECRET is None:
+    raise RuntimeError("INTERNAL_GATEWAY_SECRET no configurado")
+
+
+def verify_gateway(x_gateway_secret: str = Header(default="")):
+    valid = secrets.compare_digest(x_gateway_secret, INTERNAL_GATEWAY_SECRET)
+
+    if not valid:
+        raise HTTPException(
+            status_code=403, detail="Solicitud no autorizada desde Gateway"
+        )
 
 
 # === App ===
@@ -31,7 +35,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="FitExpress API", lifespan=lifespan)
+app = FastAPI(title="FitExpress Protected Backend API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -53,34 +57,29 @@ async def integridad(request: Request, exc: sqlite3.IntegrityError):
 # === Catalogo ===
 @app.get("/categorias")
 def listar_categorias(db: Db):
-    return [
-        CategoriaOut(**f) for f in db.execute("SELECT * FROM categorias ORDER BY nombre")
-    ]
-
-
-SELECT_PRODUCTO = """
-    SELECT p.*, c.nombre AS categoria
-    FROM productos p
-    JOIN categorias c ON c.id = p.categoria_id
-"""
-
-
-def buscar_producto(db: sqlite3.Connection, id: int) -> sqlite3.Row | None:
-    return db.execute(SELECT_PRODUCTO + " WHERE p.id = ?", (id,)).fetchone()
+    return [dict(f) for f in db.execute("SELECT * FROM categorias ORDER BY nombre")]
 
 
 @app.get("/productos")
 def listar_productos(db: Db):
-    filas = db.execute(SELECT_PRODUCTO + " ORDER BY p.nombre")
-    return [ProductoOut(**f) for f in filas]
+    filas = db.execute("""
+        SELECT p.*, c.nombre AS categoria
+        FROM productos p
+        JOIN categorias c ON c.id = p.categoria_id
+        ORDER BY p.nombre
+    """)
+    return [dict(f) for f in filas]
 
 
 @app.get("/productos/{id}")
-def obtener_producto(id: int, db: Db):
-    fila = buscar_producto(db, id)
+def obtener_producto(
+    id: int,
+    db: Db,
+):
+    fila = db.execute("SELECT * FROM productos WHERE id = ?", (id,)).fetchone()
     if fila is None:
         raise HTTPException(404, "No encontrado")
-    return ProductoOut(**fila)
+    return dict(fila)
 
 
 def validar_categoria(db: sqlite3.Connection, categoria_id: int) -> None:
@@ -91,7 +90,7 @@ def validar_categoria(db: sqlite3.Connection, categoria_id: int) -> None:
         raise HTTPException(400, "Categoría no existe")
 
 
-@app.post("/productos", status_code=201)
+@app.post("/productos", status_code=201, dependencies=[Depends(verify_gateway)])
 def crear_producto(datos: ProductoIn, db: Db):
     validar_categoria(db, datos.categoria_id)
     with db:
@@ -105,10 +104,12 @@ def crear_producto(datos: ProductoIn, db: Db):
                 datos.categoria_id,
             ),
         )
-    return ProductoOut(**buscar_producto(db, cur.lastrowid))
+    return dict(
+        db.execute("SELECT * FROM productos WHERE id = ?", (cur.lastrowid,)).fetchone()
+    )
 
 
-@app.put("/productos/{id}")
+@app.put("/productos/{id}", dependencies=[Depends(verify_gateway)])
 def actualizar_producto(id: int, datos: ProductoIn, db: Db):
     validar_categoria(db, datos.categoria_id)
     with db:
@@ -125,10 +126,10 @@ def actualizar_producto(id: int, datos: ProductoIn, db: Db):
         )
     if cur.rowcount == 0:
         raise HTTPException(404, "No encontrado")
-    return ProductoOut(**buscar_producto(db, id))
+    return dict(db.execute("SELECT * FROM productos WHERE id = ?", (id,)).fetchone())
 
 
-@app.delete("/productos/{id}")
+@app.delete("/productos/{id}", dependencies=[Depends(verify_gateway)])
 def eliminar_producto(id: int, db: Db):
     with db:
         cur = db.execute("DELETE FROM productos WHERE id = ?", (id,))
@@ -154,7 +155,7 @@ def listar_combos(db: Db):
                 (combo["id"],),
             )
         ]
-        resultado.append(ComboOut(**combo))
+        resultado.append(combo)
     return resultado
 
 
@@ -162,7 +163,7 @@ def listar_combos(db: Db):
 @app.get("/comunas")
 def listar_comunas(db: Db):
     return [
-        ComunaOut(**f)
+        dict(f)
         for f in db.execute("""
         SELECT c.id, c.nombre, c.ciudad, c.region, e.costo AS costo_envio
         FROM comunas c
@@ -179,7 +180,7 @@ def normalizar_rut(rut: str) -> str:
     return rut.replace(".", "").upper()
 
 
-@app.post("/ordenes", status_code=201)
+@app.post("/ordenes", status_code=201, dependencies=[Depends(verify_gateway)])
 def crear_orden(orden: OrdenIn, db: Db):
     envio = db.execute(
         "SELECT costo FROM costos_envio WHERE comuna_id = ?",
@@ -243,12 +244,15 @@ def crear_orden(orden: OrdenIn, db: Db):
             "INSERT INTO lineas_orden (orden_id, producto_id, combo_id, cantidad, precio_unitario) VALUES (?,?,?,?,?)",
             [(orden_id, pid, cid, cant, precio) for pid, cid, cant, precio in lineas],
         )
-    return OrdenCreadaOut(
-        id=orden_id, subtotal=subtotal, costo_envio=costo_envio, total=total
-    )
+    return {
+        "id": orden_id,
+        "subtotal": subtotal,
+        "costo_envio": costo_envio,
+        "total": total,
+    }
 
 
-@app.get("/ordenes/{id}")
+@app.get("/ordenes/{id}", dependencies=[Depends(verify_gateway)])
 def obtener_orden(id: int, db: Db):
     fila = db.execute(
         """
@@ -275,4 +279,4 @@ def obtener_orden(id: int, db: Db):
             (id,),
         )
     ]
-    return OrdenOut(**orden)
+    return orden
