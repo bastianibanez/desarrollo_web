@@ -2,6 +2,7 @@ import { getProductos, getCombos } from './api.js';
 import { formatearPrecio } from './formato.js';
 import { agregarAlCarrito } from './carrito.js';
 import { actualizarBadge } from './nav.js';
+import { imagenDeItem } from './imagenes.js';
 
 const combos = await getCombos();
 const productos = await getProductos();
@@ -44,9 +45,7 @@ function crearCard(item, tipo) {
   col.className = 'col';
   col.innerHTML = `
     <div class="card h-100">
-      <div class="product-placeholder rounded-top d-flex align-items-center justify-content-center">
-        <span class="small">Imagen pendiente</span>
-      </div>
+      <div class="product-media"></div>
       <div class="card-body d-flex flex-column">
         <h3 class="h6 card-title"></h3>
         <p class="small text-body-secondary flex-grow-1"></p>
@@ -57,6 +56,21 @@ function crearCard(item, tipo) {
       </div>
     </div>`;
   col.querySelector('h3').textContent = item.nombre;
+  const media = col.querySelector('.product-media');
+  const foto = imagenDeItem(tipo, item.nombre);
+  if (foto) {
+    const imagen = document.createElement('img');
+    imagen.className = 'product-image rounded-top';
+    imagen.src = foto;
+    imagen.alt = item.nombre;
+    imagen.loading = 'lazy';
+    imagen.width = 400;
+    imagen.height = 400;
+    media.replaceWith(imagen);
+  } else {
+    media.className = 'product-placeholder rounded-top d-flex align-items-center justify-content-center';
+    media.textContent = 'Imagen no disponible';
+  }
   col.querySelector('p').textContent = item.descripcion;
   col.querySelector('.precio').textContent = formatearPrecio(item.precio);
   col.querySelector('button').addEventListener('click', () => {
