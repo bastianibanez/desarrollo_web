@@ -17,7 +17,7 @@ services:
       vault:
         condition: service_healthy
     environment:
-      VAULT_ADDR: http://vault:8200
+      VAULT_ADDR: ${VAULT_ADDR}
       VAULT_TOKEN: ${VAULT_TOKEN}
     command: >
       vault kv put secret/gateway
@@ -39,9 +39,9 @@ services:
     ports:
       - "8000:8000"
     environment:
-      VAULT_ADDR: http://vault:8200
+      VAULT_ADDR: ${VAULT_ADDR}
       VAULT_TOKEN: ${VAULT_TOKEN}
-      BACKEND_URL: http://backend_api:9000
+      BACKEND_URL: ${BACKEND_URL}
     volumes:
       - ./api_gateway:/app
     command: uvicorn gateway:app --host 0.0.0.0 --port 8000 --reload
@@ -53,7 +53,7 @@ services:
 
   frontend:
     environment:
-      VITE_API_URL: http://localhost:8000/api
+      VITE_API_URL: ${VITE_API_URL}
       VITE_CLIENT_TOKEN: ${CLIENT_TOKEN}
     image: node:24-alpine
     working_dir: /app
