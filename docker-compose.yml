@@ -52,6 +52,9 @@ services:
         condition: service_started
 
   frontend:
+    environment:
+      VITE_API_URL: http://localhost:8000/api
+      VITE_CLIENT_TOKEN: ${CLIENT_TOKEN}
     image: node:24-alpine
     working_dir: /app
     ports:
