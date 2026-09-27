@@ -6,27 +6,37 @@ import { actualizarBadge } from './nav.js';
 const combos = await getCombos();
 const productos = await getProductos();
 
-renderSeccion('combos', combos, 'combo');
-for (const seccion of ['bowls', 'bebestibles', 'snacks']) {
-  const items = productos.filter((p) => p.categoria.toLowerCase() === seccion);
-  renderSeccion(seccion, items, 'producto');
+// row-cols-2 bajo 768px, row-cols-md-4 desde ahí: cada slide trae una fila completa
+const desktop = window.matchMedia('(min-width: 768px)');
+
+function renderCatalogo() {
+  renderSeccion('combos', combos, 'combo');
+  for (const seccion of ['bowls', 'bebestibles', 'snacks']) {
+    const items = productos.filter((p) => p.categoria.toLowerCase() === seccion);
+    renderSeccion(seccion, items, 'producto');
+  }
 }
+
+renderCatalogo();
+desktop.addEventListener('change', renderCatalogo);
 
 function renderSeccion(seccion, items, tipo) {
   const carousel = document.getElementById(`carousel-${seccion}`);
   const inner = carousel.querySelector('.carousel-inner');
+  const porSlide = desktop.matches ? 4 : 2;
+  inner.replaceChildren();
 
-  for (let i = 0; i < items.length; i += 4) {
+  for (let i = 0; i < items.length; i += porSlide) {
     const slide = document.createElement('div');
     slide.className = i === 0 ? 'carousel-item active' : 'carousel-item';
     slide.innerHTML = '<div class="row row-cols-2 row-cols-md-4 g-3 g-lg-4"></div>'
-    for (const item of items.slice(i, i + 4)) {
+    for (const item of items.slice(i, i + porSlide)) {
       slide.firstElementChild.append(crearCard(item, tipo));
     }
     inner.append(slide);
   }
 
-  new bootstrap.Carousel(carousel, { interval: false });
+  bootstrap.Carousel.getOrCreateInstance(carousel, { interval: false });
 }
 
 function crearCard(item, tipo) {
