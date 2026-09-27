@@ -1,0 +1,62 @@
+services:
+  vault:
+    image: hashicorp/vault
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_TOKEN}
+    healthcheck:
+      test: ["CMD", "vault", "status", "-address=http://127.0.0.1:8200"]
+      interval: 2s
+      retries: 15
+
+  # Carga los secretos en Vault una vez y termina
+  vault-init:
+    image: hashicorp/vault
+    depends_on:
+      vault:
+        condition: service_healthy
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: ${VAULT_TOKEN}
+    command: >
+      vault kv put secret/gateway
+      client_token=${CLIENT_TOKEN}
+      backend_shared_secret=${BACKEND_SHARED_SECRET}
+
+  backend_api:
+    build: ./backend_api
+    ports:
+      - "9000:9000"
+    environment:
+      INTERNAL_GATEWAY_SECRET: ${BACKEND_SHARED_SECRET}
+    volumes:
+      - ./backend_api:/app
+    command: uvicorn backend_api:app --host 0.0.0.0 --port 9000 --reload
+
+  api_gateway:
+    build: ./api_gateway
+    ports:
+      - "8000:8000"
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: ${VAULT_TOKEN}
+      BACKEND_URL: http://backend_api:9000
+    volumes:
+      - ./api_gateway:/app
+    command: uvicorn gateway:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      vault-init:
+        condition: service_completed_successfully
+      backend_api:
+        condition: service_started
+
+  frontend:
+    image: node:24-alpine
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # node_modules del contenedor (Linux), no el del host
+    command: sh -c "npm install && npx vite --host 0.0.0.0"
