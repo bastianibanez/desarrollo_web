@@ -4,8 +4,16 @@ import secrets
 import httpx
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Local Api Gateway")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 security = HTTPBearer(auto_error=False)
 
@@ -94,4 +102,3 @@ async def proxy(path: str, request: Request, auth=Depends(authenticate_client)):
         status_code=upstream.status_code,
         headers=response_headers,
     )
-
