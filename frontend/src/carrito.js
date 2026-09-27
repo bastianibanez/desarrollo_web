@@ -1,7 +1,7 @@
 export const leerCarrito = () => JSON.parse(localStorage.getItem('carrito')) ?? [];
 
 const guardar = (items) => localStorage.setItem('carrito', JSON.stringify(items));
-const buscar = (items, tipo, id) => item.find((i) => i.tipo === tipo && i.id === id);
+const buscar = (items, tipo, id) => items.find((i) => i.tipo === tipo && i.id === id);
 
 export function agregarAlCarrito(tipo, { id, nombre, descripcion, precio }) {
   const items = leerCarrito();
