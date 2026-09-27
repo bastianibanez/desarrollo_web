@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field, EmailStr, model_validator
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 
 # === Modelos ===

@@ -1,15 +1,16 @@
-import secrets
 import logging
+import os
+import secrets
 import sqlite3
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Header
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from modelos import ProductoIn, ClienteIn, DireccionIn, ItemIn, OrdenIn
+
 import db
-import os
+from modelos import OrdenIn, ProductoIn
 
 logger = logging.getLogger(__name__)
 
