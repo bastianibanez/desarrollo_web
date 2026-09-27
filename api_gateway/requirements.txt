@@ -1,0 +1,4 @@
+fastapi
+email-validator
+httpx
+uvicorn[standard]
