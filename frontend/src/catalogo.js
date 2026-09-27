@@ -8,7 +8,7 @@ const productos = await getProductos();
 
 renderSeccion('combos', combos, 'combo');
 for (const seccion of ['bowls', 'bebestibles', 'snacks']) {
-  const items = productos.filter((p) => p.categoria.toLowerCase());
+  const items = productos.filter((p) => p.categoria.toLowerCase() === seccion);
   renderSeccion(seccion, items, 'producto');
 }
 

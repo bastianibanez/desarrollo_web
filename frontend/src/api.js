@@ -15,5 +15,5 @@ export const getProductos = () => request('/productos');
 export const getCombos = () => request('/combos');
 export const getComunas = () => request('/comunas');
 export const crearOrden = (orden) =>
-  request('/', { method: 'POST', body: JSON.stringify(orden) });
+  request('/ordenes', { method: 'POST', body: JSON.stringify(orden) });
 

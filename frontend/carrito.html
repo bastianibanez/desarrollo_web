@@ -59,6 +59,7 @@
       <a href="index.html" class="link-success d-inline-block mb-4">&larr; Seguir comprando</a>
       <div class="border rounded-3 p-3 p-md-5">
         <h1 class="h2 text-center text-success mb-5">Finalizar compra</h1>
+        <div id="checkout-alert"></div>
         <form id="checkout-form">
           <div class="row g-4 g-lg-5">
             <section class="col-lg-6" aria-labelledby="delivery-title">
@@ -119,15 +120,6 @@
                     <label for="comuna" class="form-label">Comuna</label>
                     <select class="form-select" id="comuna" name="comuna" required>
                       <option value="" selected disabled>Elige una comuna</option>
-                      <option value="1">Providencia</option>
-                      <option value="2">Ñuñoa</option>
-                      <option value="3">Las Condes</option>
-                      <option value="4">Santiago</option>
-                      <option value="5">La Florida</option>
-                      <option value="6">Maipú</option>
-                      <option value="7">Puente Alto</option>
-                      <option value="8">Viña del Mar</option>
-                      <option value="9">Valparaíso</option>
                     </select>
                     <div class="form-text">El costo de despacho depende de la comuna.</div>
                   </div>
@@ -137,75 +129,30 @@
             <section class="col-lg-6" aria-labelledby="order-title">
               <h2 id="order-title" class="h4 mb-3">Resumen del pedido</h2>
               <div class="border rounded-3 p-3 p-md-4">
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item px-0 py-4 d-flex align-items-center gap-3">
-                    <div
-                      class="product-placeholder rounded-3 d-flex align-items-center justify-content-center text-center p-2"
-                      aria-hidden="true">
-                      <span class="small">Imagen pendiente</span>
-                    </div>
-                    <div class="flex-grow-1">
-                      <h3 class="h6 mb-1">Combo Power</h3>
-                      <p class="small text-body-secondary mb-2">Bowl, bebida de proteína y barra</p>
-                      <div class="d-flex flex-wrap justify-content-between gap-2 small">
-                        <span>Cantidad: 1</span>
-                        <span class="fw-semibold">$9.990</span>
-                      </div>
-                    </div>
-                  </li>
-                  <li class="list-group-item px-0 py-4 d-flex align-items-center gap-3">
-                    <div
-                      class="product-placeholder rounded-3 d-flex align-items-center justify-content-center text-center p-2"
-                      aria-hidden="true">
-                      <span class="small">Imagen pendiente</span>
-                    </div>
-                    <div class="flex-grow-1">
-                      <h3 class="h6 mb-1">Bowl 1</h3>
-                      <p class="small text-body-secondary mb-2">Producto de ejemplo</p>
-                      <div class="d-flex flex-wrap justify-content-between gap-2 small">
-                        <span>Cantidad: 1</span>
-                        <span class="fw-semibold">$6.990</span>
-                      </div>
-                    </div>
-                  </li>
-                  <li class="list-group-item px-0 py-4 d-flex align-items-center gap-3">
-                    <div
-                      class="product-placeholder rounded-3 d-flex align-items-center justify-content-center text-center p-2"
-                      aria-hidden="true">
-                      <span class="small">Imagen pendiente</span>
-                    </div>
-                    <div class="flex-grow-1">
-                      <h3 class="h6 mb-1">Snack 1</h3>
-                      <p class="small text-body-secondary mb-2">Producto de ejemplo</p>
-                      <div class="d-flex flex-wrap justify-content-between gap-2 small">
-                        <span>Cantidad: 1</span>
-                        <span class="fw-semibold">$1.990</span>
-                      </div>
-                    </div>
-                  </li>
-                </ul>
+                <ul id="carrito-lista" class="list-group list-group-flush"></ul>
                 <dl class="mb-0 border-top pt-3">
                   <div class="d-flex justify-content-between gap-3 mb-2">
                     <dt class="fw-normal">Subtotal</dt>
-                    <dd class="mb-0">$18.970</dd>
+                    <dd id="subtotal" class="mb-0"></dd>
                   </div>
                   <div class="d-flex justify-content-between gap-3 mb-3">
                     <dt class="fw-normal">Despacho de ejemplo</dt>
-                    <dd class="mb-0">$1.990</dd>
+                    <dd id="despacho" class="mb-0"></dd>
                   </div>
                   <div class="d-flex justify-content-between gap-3 border-top pt-3 fs-5 fw-semibold">
                     <dt>Total</dt>
-                    <dd class="mb-0">$20.960</dd>
+                    <dd id="total" class="mb-0"></dd>
                   </div>
                 </dl>
               </div>
-              <button type="button" class="btn btn-success btn-lg w-100 mt-4">Pagar</button>
+              <button id="btn-pagar" type="submit" class="btn btn-success btn-lg w-100 mt-4">Pagar</button>
             </section>
           </div>
         </form>
       </div>
     </main>
   </div>
+  <script type="module" src="/src/checkout.js"></script>
 </body>
 
 </html>
