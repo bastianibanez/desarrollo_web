@@ -1,10 +1,12 @@
-from fastapi import FastAPI, Depends, HTTPException, Request, Response
-from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import secrets
-import httpx
 import os
-from modelos import ProductoIn, OrdenIn
+import secrets
+
+import httpx
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi.responses import JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+from modelos import OrdenIn, ProductoIn
 
 app = FastAPI(title="Local Api Gateway")
 

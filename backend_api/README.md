@@ -11,7 +11,7 @@ pip install -r requirements-dev.txt   # solo ejecución: requirements.txt
 ## Ejecución
 
 ```bash
-fastapi dev main.py --port 3000
+uvicorn backend_api:app --reload --port 3000
 ```
 
 Se usa el puerto 3000, el mismo del servidor Express anterior. La base SQLite se
