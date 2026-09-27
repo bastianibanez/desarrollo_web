@@ -1,0 +1,3 @@
+fastapi
+email-validator
+uvicorn[standard]
