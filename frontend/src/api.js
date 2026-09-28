@@ -2,6 +2,14 @@ const BASE = import.meta.env.VITE_API_URL;
 const TOKEN = import.meta.env.VITE_CLIENT_TOKEN
 
 async function request(path, options = {}) {
+  const sesion = sessionStorage.getItem('sesion');
+  const headers = {
+    Authorization: `Bearer ${TOKEN}`,
+    'Content-Type': 'application/json'
+  };
+
+  if (sesion) headers['X-User-Session'] = sesion;
+
   const res = await fetch(BASE + path, {
     ...options,
     headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }
@@ -16,4 +24,6 @@ export const getCombos = () => request('/combos');
 export const getComunas = () => request('/comunas');
 export const crearOrden = (orden) =>
   request('/ordenes', { method: 'POST', body: JSON.stringify(orden) });
-
+export const login = (datos) => request('/login', {
+  method: 'POST', body: JSON.stringify(datos)
+})
