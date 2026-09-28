@@ -5,15 +5,17 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
-# === Esquema ===
+# === Tablas ===
 
-SCHEMA = """
+CATEGORIAS = """
 CREATE TABLE IF NOT EXISTS categorias (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL UNIQUE,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+"""
 
+PRODUCTOS = """
 CREATE TABLE IF NOT EXISTS productos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL,
@@ -24,7 +26,9 @@ CREATE TABLE IF NOT EXISTS productos (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+"""
 
+COMBOS = """
 CREATE TABLE IF NOT EXISTS combos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL,
@@ -33,7 +37,9 @@ CREATE TABLE IF NOT EXISTS combos (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+"""
 
+LINEAS_COMBO = """
 CREATE TABLE IF NOT EXISTS lineas_combo (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   combo_id INTEGER NOT NULL REFERENCES combos(id) ON DELETE CASCADE,
@@ -41,14 +47,18 @@ CREATE TABLE IF NOT EXISTS lineas_combo (
   cantidad INTEGER NOT NULL DEFAULT 1 CHECK (cantidad > 0),
   UNIQUE (combo_id, producto_id)
 );
+"""
 
+COMUNAS = """
 CREATE TABLE IF NOT EXISTS comunas (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL UNIQUE,
   ciudad TEXT NOT NULL,
   region TEXT NOT NULL
 );
+"""
 
+COSTOS_ENVIO = """
 CREATE TABLE IF NOT EXISTS costos_envio (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   comuna_id INTEGER NOT NULL UNIQUE REFERENCES comunas(id),
@@ -56,7 +66,9 @@ CREATE TABLE IF NOT EXISTS costos_envio (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+"""
 
+CLIENTES = """
 CREATE TABLE IF NOT EXISTS clientes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombres TEXT NOT NULL,
@@ -67,7 +79,9 @@ CREATE TABLE IF NOT EXISTS clientes (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+"""
 
+ORDENES = """
 CREATE TABLE IF NOT EXISTS ordenes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   cliente_id INTEGER NOT NULL REFERENCES clientes(id),
@@ -84,7 +98,9 @@ CREATE TABLE IF NOT EXISTS ordenes (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+"""
 
+LINEAS_ORDEN = """
 CREATE TABLE IF NOT EXISTS lineas_orden (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   orden_id INTEGER NOT NULL REFERENCES ordenes(id) ON DELETE CASCADE,
@@ -94,43 +110,85 @@ CREATE TABLE IF NOT EXISTS lineas_orden (
   precio_unitario INTEGER NOT NULL CHECK (precio_unitario >= 0),
   CHECK ((producto_id IS NULL) <> (combo_id IS NULL))
 );
+"""
 
-CREATE INDEX IF NOT EXISTS idx_productos_categoria ON productos(categoria_id);
-CREATE INDEX IF NOT EXISTS idx_lineas_combo_combo ON lineas_combo(combo_id);
-CREATE INDEX IF NOT EXISTS idx_ordenes_cliente ON ordenes(cliente_id);
-CREATE INDEX IF NOT EXISTS idx_ordenes_estado ON ordenes(estado);
-CREATE INDEX IF NOT EXISTS idx_lineas_orden_orden ON lineas_orden(orden_id);
+TABLAS = [
+    CATEGORIAS,
+    PRODUCTOS,
+    COMBOS,
+    LINEAS_COMBO,
+    COMUNAS,
+    COSTOS_ENVIO,
+    CLIENTES,
+    ORDENES,
+    LINEAS_ORDEN,
+]
 
+
+# === Indices ===
+
+INDICES = [
+    "CREATE INDEX IF NOT EXISTS idx_productos_categoria ON productos(categoria_id);",
+    "CREATE INDEX IF NOT EXISTS idx_lineas_combo_combo ON lineas_combo(combo_id);",
+    "CREATE INDEX IF NOT EXISTS idx_ordenes_cliente ON ordenes(cliente_id);",
+    "CREATE INDEX IF NOT EXISTS idx_ordenes_estado ON ordenes(estado);",
+    "CREATE INDEX IF NOT EXISTS idx_lineas_orden_orden ON lineas_orden(orden_id);",
+]
+
+
+# === Triggers ===
+
+PRODUCTO_ACTUALIZADO = """
 CREATE TRIGGER IF NOT EXISTS productos_updated_at
 AFTER UPDATE ON productos
 BEGIN
   UPDATE productos SET updated_at = datetime('now') WHERE id = NEW.id;
 END;
+"""
 
+COMBO_ACTUALIZADO = """
 CREATE TRIGGER IF NOT EXISTS combos_updated_at
 AFTER UPDATE ON combos
 BEGIN
   UPDATE combos SET updated_at = datetime('now') WHERE id = NEW.id;
 END;
+"""
 
+COSTO_ENVIO_ACTUALIZADO = """
 CREATE TRIGGER IF NOT EXISTS costos_envio_updated_at
 AFTER UPDATE ON costos_envio
 BEGIN
   UPDATE costos_envio SET updated_at = datetime('now') WHERE id = NEW.id;
 END;
+"""
 
+CLIENTE_ACTUALIZADO = """
 CREATE TRIGGER IF NOT EXISTS clientes_updated_at
 AFTER UPDATE ON clientes
 BEGIN
   UPDATE clientes SET updated_at = datetime('now') WHERE id = NEW.id;
 END;
+"""
 
+ORDEN_ACTUALIZADA = """
 CREATE TRIGGER IF NOT EXISTS ordenes_updated_at
 AFTER UPDATE ON ordenes
 BEGIN
   UPDATE ordenes SET updated_at = datetime('now') WHERE id = NEW.id;
 END;
 """
+
+TRIGGERS = [
+    PRODUCTO_ACTUALIZADO,
+    COMBO_ACTUALIZADO,
+    COSTO_ENVIO_ACTUALIZADO,
+    CLIENTE_ACTUALIZADO,
+    ORDEN_ACTUALIZADA
+]
+
+# === Esquema ===
+
+SCHEMA = "\n\n".join(TABLAS+INDICES+TRIGGERS)
 
 # === FIXTURES
 
@@ -168,15 +226,39 @@ PRODUCTOS = [
     ("Jugo Natural Naranja", "350 ml recién exprimido", 2500, 40, "Bebestibles"),
     ("Kombucha Jengibre", "Botella 330 ml", 2990, 30, "Bebestibles"),
     ("Agua Mineral", "500 ml", 1200, 60, "Bebestibles"),
-    ("Batido Proteico", "Plátano, avena y proteína whey, 400 ml", 3490, 25, "Bebestibles"),
-    ("Jugo Verde", "Espinaca, manzana, pepino y limón, 350 ml", 2790, 30, "Bebestibles"),
-    ("Té Helado Matcha", "Matcha con leche de almendras, 350 ml", 2990, 25, "Bebestibles"),
+    (
+        "Batido Proteico",
+        "Plátano, avena y proteína whey, 400 ml",
+        3490,
+        25,
+        "Bebestibles",
+    ),
+    (
+        "Jugo Verde",
+        "Espinaca, manzana, pepino y limón, 350 ml",
+        2790,
+        30,
+        "Bebestibles",
+    ),
+    (
+        "Té Helado Matcha",
+        "Matcha con leche de almendras, 350 ml",
+        2990,
+        25,
+        "Bebestibles",
+    ),
     ("Agua de Coco", "Botella 330 ml", 1990, 40, "Bebestibles"),
     ("Mix Frutos Secos", "Bolsa 80 g", 1990, 50, "Snacks"),
     ("Barra de Granola", "Avena, miel y almendras", 1490, 50, "Snacks"),
     ("Chips de Kale", "Horneados, bolsa 40 g", 1790, 40, "Snacks"),
     ("Galletas de Avena", "Sin azúcar añadida, pack de 3", 1590, 45, "Snacks"),
-    ("Hummus con Zanahoria", "Hummus 100 g con bastones de zanahoria", 2290, 30, "Snacks"),
+    (
+        "Hummus con Zanahoria",
+        "Hummus 100 g con bastones de zanahoria",
+        2290,
+        30,
+        "Snacks",
+    ),
     ("Yogurt Griego", "Con miel y nueces, 150 g", 1890, 35, "Snacks"),
 ]
 
@@ -286,3 +368,6 @@ def get_db() -> Iterator[sqlite3.Connection]:
         yield conn
     finally:
         conn.close()
+
+if __name__ == "__main__":
+    print(SCHEMA)
