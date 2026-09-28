@@ -112,6 +112,98 @@ CREATE TABLE IF NOT EXISTS lineas_orden (
 );
 """
 
+CLIENTES = """
+CREATE TABLE IF NOT EXISTS clientes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombres TEXT NOT NULL,
+  apellidos TEXT NOT NULL,
+  rut TEXT NOT NULL UNIQUE,
+  email TEXT NOT NULL,
+  telefono TEXT,
+  direccion TEXT,
+  comuna_id INTEGER REFERENCES comunas(id),
+  provincia TEXT,
+  region TEXT,
+  fecha_nacimiento TEXT,
+  sexo TEXT,
+  email_verificado_at TEXT,
+  codigo_hash TEXT,
+  codigo_expira_at TEXT,
+  activo INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+"""
+
+USUARIOS = """
+CREATE TABLE IF NOT EXISTS usuarios (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cliente_id INTEGER UNIQUE REFERENCES clientes(id),
+  identificador TEXT NOT NULL UNIQUE,
+  password_hash TEXT,
+  rol TEXT NOT NULL CHECK (rol IN
+    ('cliente','administrador','cajero','despacho','dueno')),
+  activo INTEGER NOT NULL DEFAULT 1
+);
+"""
+
+SESIONES = """
+CREATE TABLE IF NOT EXISTS sesiones (
+  token_hash TEXT PRIMARY KEY,
+  usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+  expira_at TEXT NOT NULL
+);
+"""
+
+CAJAS = """
+CREATE TABLE IF NOT EXISTS cajas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL UNIQUE,
+  cajero_id INTEGER REFERENCES usuarios(id)
+)
+"""
+
+ORDENES = """
+CREATE TABLE IF NOT EXISTS ordenes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cliente_id INTEGER NOT NULL REFERENCES clientes(id),
+  calle TEXT NOT NULL,
+  numero TEXT NOT NULL,
+  departamento TEXT,
+  comuna_id INTEGER NOT NULL REFERENCES comunas(id),
+  subtotal INTEGER NOT NULL CHECK (subtotal >= 0),
+  costo_envio INTEGER NOT NULL CHECK (costo_envio >= 0),
+  descuento INTEGER NOT NULL DEFAULT 0 CHECK (descuento >= 0),
+  total INTEGER NOT NULL CHECK (total >= 0),
+  estado TEXT NOT NULL DEFAULT 'pendiente'
+    CHECK (estado IN ('pendiente','pagada','preparando',
+                     'enviada','entregada','cancelada')),
+  paid_at TEXT,
+  ultimo_pago_resultado TEXT,
+  motivo_anulacion TEXT,
+  anulada_at TEXT,
+  anulada_por INTEGER REFERENCES usuarios(id),
+  impresa_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+"""
+
+VENTAS = """
+CREATE TABLE IF NOT EXISTS ventas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  orden_id INTEGER NOT NULL UNIQUE REFERENCES ordenes(id),
+  caja_id INTEGER NOT NULL REFERENCES cajas(id),
+  cajero_id INTEGER NOT NULL REFERENCES usuarios(id),
+  total INTEGER NOT NULL CHECK (total >= 0),
+  created_at TEXT NOT NULL,
+  anulada_at TEXT,
+  comprobante_emitido_at TEXT,
+  comprobante_enviado_at TEXT,
+  ultimo_error_correo TEXT
+);
+"""
+
 TABLAS = [
     CATEGORIAS,
     PRODUCTOS,
@@ -122,6 +214,12 @@ TABLAS = [
     CLIENTES,
     ORDENES,
     LINEAS_ORDEN,
+    CLIENTES,
+    USUARIOS,
+    SESIONES,
+    CAJAS,
+    ORDENES,
+    VENTAS,
 ]
 
 
@@ -133,8 +231,11 @@ INDICES = [
     "CREATE INDEX IF NOT EXISTS idx_ordenes_cliente ON ordenes(cliente_id);",
     "CREATE INDEX IF NOT EXISTS idx_ordenes_estado ON ordenes(estado);",
     "CREATE INDEX IF NOT EXISTS idx_lineas_orden_orden ON lineas_orden(orden_id);",
+    "CREATE INDEX IF NOT EXISTS idx_usuarios_cliente ON usuarios(cliente_id);",
+    "CREATE INDEX IF NOT EXISTS idx_sesiones_usuario ON sesiones(usuario_id);",
+    "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas(created_at);",
+    "CREATE INDEX IF NOT EXISTS idx_ventas_caja ON ventas(caja_id);",
 ]
-
 
 # === Triggers ===
 
@@ -178,17 +279,86 @@ BEGIN
 END;
 """
 
+# === Triggers ===
+
+PRODUCTO_ACTUALIZADO = """
+CREATE TRIGGER IF NOT EXISTS productos_updated_at
+AFTER UPDATE ON productos
+BEGIN
+  UPDATE productos SET updated_at = datetime('now') WHERE id = NEW.id;
+END;
+"""
+
+COMBO_ACTUALIZADO = """
+CREATE TRIGGER IF NOT EXISTS combos_updated_at
+AFTER UPDATE ON combos
+BEGIN
+  UPDATE combos SET updated_at = datetime('now') WHERE id = NEW.id;
+END;
+"""
+
+COSTO_ENVIO_ACTUALIZADO = """
+CREATE TRIGGER IF NOT EXISTS costos_envio_updated_at
+AFTER UPDATE ON costos_envio
+BEGIN
+  UPDATE costos_envio SET updated_at = datetime('now') WHERE id = NEW.id;
+END;
+"""
+
+CLIENTE_ACTUALIZADO = """
+CREATE TRIGGER IF NOT EXISTS clientes_updated_at
+AFTER UPDATE ON clientes
+BEGIN
+  UPDATE clientes SET updated_at = datetime('now') WHERE id = NEW.id;
+END;
+"""
+
+ORDEN_ACTUALIZADA = """
+CREATE TRIGGER IF NOT EXISTS ordenes_updated_at
+AFTER UPDATE ON ordenes
+BEGIN
+  UPDATE ordenes SET updated_at = datetime('now') WHERE id = NEW.id;
+END;
+"""
+
+USUARIO_ACTUALIZADO = """
+CREATE TRIGGER IF NOT EXISTS usuarios_updated_at
+AFTER UPDATE ON usuarios
+BEGIN
+  UPDATE usuarios SET updated_at = datetime('now') WHERE id = NEW.id;
+END;
+"""
+
+CAJA_ACTUALIZADA = """
+CREATE TRIGGER IF NOT EXISTS cajas_updated_at
+AFTER UPDATE ON cajas
+BEGIN
+  UPDATE cajas SET updated_at = datetime('now') WHERE id = NEW.id;
+END;
+"""
+
+VENTA_ACTUALIZADA = """
+CREATE TRIGGER IF NOT EXISTS ventas_updated_at
+AFTER UPDATE ON ventas
+BEGIN
+  UPDATE ventas SET updated_at = datetime('now') WHERE id = NEW.id;
+END;
+"""
+
 TRIGGERS = [
     PRODUCTO_ACTUALIZADO,
     COMBO_ACTUALIZADO,
     COSTO_ENVIO_ACTUALIZADO,
     CLIENTE_ACTUALIZADO,
-    ORDEN_ACTUALIZADA
+    ORDEN_ACTUALIZADA,
+    USUARIO_ACTUALIZADO,
+    CAJA_ACTUALIZADA,
+    VENTA_ACTUALIZADA,
 ]
 
 # === Esquema ===
 
-SCHEMA = "\n\n".join(TABLAS+INDICES+TRIGGERS)
+SCHEMA = "\n\n".join(TABLAS + INDICES + TRIGGERS)
 
 # === FIXTURES
 
@@ -361,6 +531,8 @@ def sembrar(conn: sqlite3.Connection) -> None:
                         (combo_id, prod_id, cantidad),
                     )
 
+        conn.execute("INSERT OR IGNORE INTO cajas (nombre) VALUES ('Web')")
+
 
 def get_db() -> Iterator[sqlite3.Connection]:
     conn = conectar()
@@ -369,5 +541,7 @@ def get_db() -> Iterator[sqlite3.Connection]:
     finally:
         conn.close()
 
+
 if __name__ == "__main__":
     print(SCHEMA)
+
