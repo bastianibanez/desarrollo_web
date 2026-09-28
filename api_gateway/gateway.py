@@ -12,7 +12,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["Authorization", "Content-Type", "X-User-Session"],
 )
 
 security = HTTPBearer(auto_error=False)
@@ -74,6 +74,11 @@ async def proxy(path: str, request: Request, auth=Depends(authenticate_client)):
         "X-Gateway-Secret": auth["backend_secret"],
         "X-Authenticated-Client": auth["client_id"],
     }
+
+    sesion = request.headers.get("x-user-session")
+
+    if sesion:
+        gateway_headers["X-User-Session"] = sesion
 
     content_type = request.headers.get("content-type")
 

@@ -81,25 +81,6 @@ CREATE TABLE IF NOT EXISTS clientes (
 );
 """
 
-ORDENES = """
-CREATE TABLE IF NOT EXISTS ordenes (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  cliente_id INTEGER NOT NULL REFERENCES clientes(id),
-  calle TEXT NOT NULL,
-  numero TEXT NOT NULL,
-  departamento TEXT,
-  comuna_id INTEGER NOT NULL REFERENCES comunas(id),
-  subtotal INTEGER NOT NULL CHECK (subtotal >= 0),
-  costo_envio INTEGER NOT NULL CHECK (costo_envio >= 0),
-  descuento INTEGER NOT NULL DEFAULT 0 CHECK (descuento >= 0),
-  total INTEGER NOT NULL CHECK (total >= 0),
-  estado TEXT NOT NULL DEFAULT 'pendiente'
-    CHECK (estado IN ('pendiente', 'pagada', 'preparando', 'enviada', 'entregada', 'cancelada')),
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-"""
-
 LINEAS_ORDEN = """
 CREATE TABLE IF NOT EXISTS lineas_orden (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -160,7 +141,7 @@ CREATE TABLE IF NOT EXISTS cajas (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL UNIQUE,
   cajero_id INTEGER REFERENCES usuarios(id)
-)
+);
 """
 
 ORDENES = """
