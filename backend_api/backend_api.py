@@ -4,13 +4,16 @@ import secrets
 import sqlite3
 from contextlib import asynccontextmanager
 from typing import Annotated
-
+import hashlib
+from datetime import datetime, timedelta, timezone
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 import db
-from modelos import OrdenIn, ProductoIn
+from modelos import OrdenIn, ProductoIn, VerificarCorreoIn, ClienteRegistroIn, LoginIn
+from seguridad import hash_password, requiere, crear_sesion, password_valida
+from correo import enviar_correo
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +49,79 @@ app.add_middleware(
 )
 
 Db = Annotated[sqlite3.Connection, Depends(db.get_db)]
+
+
+def nuevo_codigo() -> tuple[str, str, str]:
+    codigo = f"{secrets.randbelow(1_000_000):06d}"
+    digest = hashlib.sha256(codigo.encode()).hexdigest()
+    expira = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat()
+    return codigo, digest, expira
+
+
+def validar_digito_rut(rut: str) -> None:
+    cuerpo, guion, digito = rut.rpartition("-")
+    if (
+        not guion
+        or not cuerpo.isdecimal()
+        or len(cuerpo) > 8
+        or len(digito) != 1
+        or digito not in "0123456789K"
+    ):
+        raise HTTPException(422, "RUT inválido")
+    suma = sum(int(n) * (2 + i % 6) for i, n in enumerate(reversed(cuerpo)))
+    resto = 11 - suma % 11
+    esperado = "0" if resto == 11 else "K" if resto == 10 else str(resto)
+    if digito != esperado:
+        raise HTTPException(422, "RUT inválido")
+
+
+def registrar_cliente(datos: ClienteRegistroIn, db: Db):
+    rut = normalizar_rut(datos.rut)
+    validar_digito_rut(rut)  # implementar con el algoritmo de frontend/src/rut.js
+    codigo, digest, expira = nuevo_codigo()
+    email = str(datos.email).lower()
+    if (
+        db.execute("SELECT 1 FROM comunas WHERE id = ?", (datos.comuna_id,)).fetchone()
+        is None
+    ):
+        raise HTTPException(400, "Comuna no existe")
+    with db:
+        cur = db.execute(
+            """
+            INSERT INTO clientes
+            (nombres, apellidos, rut, email, telefono, direccion,
+             comuna_id, provincia, region, fecha_nacimiento, sexo,
+             codigo_hash, codigo_expira_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """,
+            (
+                datos.nombres,
+                datos.apellidos,
+                rut,
+                email,
+                datos.telefono,
+                datos.direccion,
+                datos.comuna_id,
+                datos.provincia,
+                datos.region,
+                datos.fecha_nacimiento.isoformat(),
+                datos.sexo,
+                digest,
+                expira,
+            ),
+        )
+        cliente_id = cur.lastrowid
+        db.execute(
+            """
+            INSERT INTO usuarios (cliente_id, identificador, rol)
+            VALUES (?, ?, 'cliente')
+        """,
+            (cliente_id, email),
+        )
+    enviar_correo(
+        email, "Verifica tu correo FitExpress", f"Tu código de verificación es {codigo}"
+    )
+    return {"cliente_id": cliente_id, "estado": "pendiente"}
 
 
 @app.exception_handler(sqlite3.IntegrityError)
@@ -281,3 +357,59 @@ def obtener_orden(id: int, db: Db):
         )
     ]
     return orden
+
+
+@app.post("/clientes/verificar-correo")
+def verificar_correo(datos: VerificarCorreoIn, db: Db):
+    cliente = db.execute(
+        "SELECT * FROM clientes WHERE id = ?", (datos.cliente_id,)
+    ).fetchone()
+    if cliente is None or cliente["codigo_hash"] is None:
+        raise HTTPException(400, "Verificación no disponible")
+    if cliente["codigo_expira_at"] <= datetime.now(timezone.utc).isoformat():
+        raise HTTPException(400, "Código vencido")
+    digest = hashlib.sha256(datos.codigo.encode()).hexdigest()
+    if not secrets.compare_digest(digest, cliente["codigo_hash"]):
+        raise HTTPException(400, "Código incorrecto")
+    with db:
+        db.execute(
+            """
+            UPDATE clientes SET email_verificado_at = ?,
+                codigo_hash = NULL, codigo_expira_at = NULL WHERE id = ?
+        """,
+            (datetime.now(timezone.utc).isoformat(), datos.cliente_id),
+        )
+        db.execute(
+            "UPDATE usuarios SET password_hash = ? WHERE cliente_id = ?",
+            (hash_password(datos.password), datos.cliente_id),
+        )
+    return {"verificado": True}
+
+
+@app.post("/registro", status_code=201)
+def registro_web(datos: ClienteRegistroIn, db: Db):
+    return registrar_cliente(datos, db)
+
+
+@app.post("/admin/clientes", status_code=201)
+def registro_admin(
+    datos: ClienteRegistroIn, db: Db, _=Depends(requiere("administrador"))
+):
+    return registrar_cliente(datos, db)
+
+
+@app.post("/login")
+def login(datos: LoginIn, db: Db):
+    usuario = db.execute(
+        """
+        SELECT u.*, c.email_verificado_at FROM usuarios u
+        LEFT JOIN clientes c ON c.id = u.cliente_id
+        WHERE u.identificador = ? AND u.activo = 1
+    """,
+        (datos.identificador.lower(),),
+    ).fetchone()
+    if usuario is None or not password_valida(datos.password, usuario["password_hash"]):
+        raise HTTPException(401, "Credenciales inválidas")
+    if usuario["rol"] == "cliente" and not usuario["email_verificado_at"]:
+        raise HTTPException(403, "Correo sin verificar")
+    return {"sesion": crear_sesion(db, usuario["id"]), "rol": usuario["rol"]}

@@ -1,5 +1,6 @@
 from typing import Literal
 
+from datetime import date
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
 
@@ -129,3 +130,28 @@ class OrdenOut(BaseModel):
     created_at: str
     updated_at: str
     lineas: list[LineaOrdenOut]
+
+
+class ClienteRegistroIn(BaseModel):
+    nombres: str = Field(min_length=1)
+    apellidos: str = Field(min_length=1)
+    rut: str = Field(min_length=3)
+    direccion: str = Field(min_length=1)
+    comuna_id: int
+    provincia: str = Field(min_length=1)
+    region: str = Field(min_length=1)
+    fecha_nacimiento: date
+    sexo: str = Field(min_length=1)
+    email: EmailStr
+    telefono: str = Field(min_length=1)
+
+
+class VerificarCorreoIn(BaseModel):
+    cliente_id: int
+    codigo: str = Field(pattern=r"^\d{6}$")
+    password: str = Field(min_length=8)
+
+
+class LoginIn(BaseModel):
+    identificador: str
+    password: str
