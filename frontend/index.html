@@ -21,12 +21,67 @@
       box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
     }
 
+    .hero {
+      position: relative;
+      aspect-ratio: 1959 / 803;
+      overflow: hidden;
+      background: #f5f1e9;
+    }
+
     .hero-img {
       display: block;
       width: 100%;
-      height: auto;
-      aspect-ratio: 5 / 2;
+      height: 100%;
       object-fit: cover;
+    }
+
+    .hero-content {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 49%;
+      padding-inline: clamp(0.25rem, 1vw, 1rem);
+      transform: translateY(-50%);
+      color: #123d1b;
+      text-align: center;
+    }
+
+    .hero-title {
+      margin: 0 0 0.5rem;
+      font-size: clamp(1.45rem, 5.5vw, 5rem);
+      font-weight: 800;
+      line-height: 0.98;
+      letter-spacing: -0.05em;
+    }
+
+    .hero-title span {
+      color: #388c20;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 1.25rem;
+      font-size: clamp(0.85rem, 1.55vw, 1.25rem);
+    }
+
+    .hero-price {
+      display: inline-block;
+      padding: 0.3em 0.75em;
+      border-radius: 999px;
+      background: #246b24;
+      color: #fff;
+      font-size: clamp(1rem, 2.2vw, 1.75rem);
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    @media (max-width: 575px) {
+      .hero-title {
+        margin-bottom: 0.55rem;
+      }
+
+      .hero-subtitle {
+        display: none;
+      }
     }
 
     .catalog-section {
@@ -76,8 +131,14 @@
 
     </header>
 
-    <img class="hero-img rounded-3 mb-4" src="https://pub-1a2cdad7d229486fb35e3638126722d1.r2.dev/hero.webp"
-      alt="Combo Power FitExpress: bowl, bebida de proteína y barra por $9.990. Ahorra 23%." />
+    <section class="hero rounded-3 mb-4" aria-labelledby="hero-title">
+      <img id="hero-image" class="hero-img" alt="Bowl, batido y barra del Combo Power" width="1959" height="803" fetchpriority="high" />
+      <div class="hero-content">
+        <h1 id="hero-title" class="hero-title">Combo<br><span>Power</span></h1>
+        <p class="hero-subtitle">Bowl + batido + barra</p>
+        <span class="hero-price">$9.990</span>
+      </div>
+    </section>
 
     <main class="pt-3 pb-4" aria-label="Catálogo de productos">
       <section id="combos" class="catalog-section mb-5" aria-labelledby="combos-title">

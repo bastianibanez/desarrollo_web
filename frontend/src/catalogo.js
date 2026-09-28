@@ -2,7 +2,9 @@ import { getProductos, getCombos } from './api.js';
 import { formatearPrecio } from './formato.js';
 import { agregarAlCarrito } from './carrito.js';
 import { actualizarBadge } from './nav.js';
-import { imagenDeItem } from './imagenes.js';
+import { imagenDeItem, imagenHero } from './imagenes.js';
+
+document.getElementById('hero-image').src = imagenHero();
 
 const combos = await getCombos();
 const productos = await getProductos();

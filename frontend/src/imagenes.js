@@ -28,6 +28,10 @@ const archivos = {
 
 const baseImagenes = 'https://pub-1a2cdad7d229486fb35e3638126722d1.r2.dev';
 
+export function imagenHero() {
+  return `${baseImagenes}/hero-simple.webp`;
+}
+
 export function imagenDeItem(tipo, nombre) {
   const archivo = archivos[`${tipo}:${nombre}`];
   return archivo ? `${baseImagenes}/${archivo}` : undefined;
