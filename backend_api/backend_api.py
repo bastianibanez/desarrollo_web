@@ -24,9 +24,11 @@ from modelos import (
 from seguridad import (
     crear_sesion,
     hash_password,
+    ocultar_oferta,
     password_valida,
     requiere,
     usuario_actual,
+    usuario_opcional,
 )
 from correo import enviar_correo
 
@@ -164,25 +166,26 @@ def listar_categorias(db: Db):
 
 
 @app.get("/productos", dependencies=[Depends(verify_gateway)])
-def listar_productos(db: Db):
+def listar_productos(db: Db, usuario=Depends(usuario_opcional)):
     filas = db.execute("""
         SELECT p.*, c.nombre AS categoria
         FROM productos p
         JOIN categorias c ON c.id = p.categoria_id
         ORDER BY p.nombre
     """)
-    return [dict(f) for f in filas]
+    return [ocultar_oferta(dict(f), usuario) for f in filas]
 
 
 @app.get("/productos/{id}")
 def obtener_producto(
     id: int,
     db: Db,
+    usuario=Depends(usuario_opcional),
 ):
     fila = db.execute("SELECT * FROM productos WHERE id = ?", (id,)).fetchone()
     if fila is None:
         raise HTTPException(404, "No encontrado")
-    return dict(fila)
+    return ocultar_oferta(dict(fila), usuario)
 
 
 def validar_categoria(db: sqlite3.Connection, categoria_id: int) -> None:
@@ -248,10 +251,10 @@ def eliminar_producto(id: int, db: Db, _=Depends(requiere("administrador", "duen
 
 
 @app.get("/combos")
-def listar_combos(db: Db):
+def listar_combos(db: Db, usuario=Depends(usuario_opcional)):
     resultado = []
     for fila in db.execute("SELECT * FROM combos ORDER BY nombre"):
-        combo = dict(fila)
+        combo = ocultar_oferta(dict(fila), usuario)
         combo["productos"] = [
             dict(p)
             for p in db.execute(
@@ -270,6 +273,7 @@ def listar_combos(db: Db):
             SELECT lc.cantidad, p.stock
             FROM lineas_combo lc
             JOIN productos p ON p.id = lc.producto_id
+            WHERE lc.combo_id = ?
         """,
             (combo["id"],),
         ).fetchall()
@@ -315,13 +319,15 @@ def crear_orden(orden: OrdenIn, db: Db):
     for item in orden.items:
         if item.producto_id is not None:
             fila = db.execute(
-                "SELECT precio FROM productos WHERE id = ?", (item.producto_id,)
+                "SELECT COALESCE(precio_oferta, precio) AS precio FROM productos WHERE id = ?",
+                (item.producto_id,),
             ).fetchone()
             if fila is None:
                 raise HTTPException(400, "Producto no existe")
         else:
             fila = db.execute(
-                "SELECT precio FROM combos WHERE id = ?", (item.combo_id,)
+                "SELECT COALESCE(precio_oferta, precio) AS precio FROM combos WHERE id = ?",
+                (item.combo_id,),
             ).fetchone()
             if fila is None:
                 raise HTTPException(400, "Combo no existe")

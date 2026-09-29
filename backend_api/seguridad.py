@@ -53,6 +53,27 @@ def usuario_actual(x_user_session: str = Header(default=""), conn=Depends(db.get
     return dict(fila)
 
 
+def usuario_opcional(x_user_session: str = Header(default=""), conn=Depends(db.get_db)):
+    try:
+        return usuario_actual(x_user_session, conn)
+    except HTTPException:
+        return None
+
+
+def ve_ofertas(usuario) -> bool:
+    if usuario is None:
+        return False
+    if usuario["rol"] in ("administrador", "dueno"):
+        return True
+    return usuario["rol"] == "cliente" and bool(usuario["email_verificado_at"])
+
+
+def ocultar_oferta(fila: dict, usuario) -> dict:
+    if not ve_ofertas(usuario):
+        fila["precio_oferta"] = None
+    return fila
+
+
 def requiere(*roles: str):
     def comprobar(usuario=Depends(usuario_actual)):
         if usuario["rol"] not in roles:
