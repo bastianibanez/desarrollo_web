@@ -95,6 +95,14 @@
       color: #47633f;
     }
 
+    /* Misma altura con o sin precio de oferta, para que los botones queden alineados */
+    .precio-bloque {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 2.4rem;
+    }
+
     .product-image {
       display: block;
       width: 100%;
@@ -127,6 +135,7 @@
             Carrito <span id="carrito-badge" class="badge rounded-pill text-bg-success"></span>
           </a>
         </li>
+        <li><a href="acceso.html" class="nav-link px-2">Acceso</a></li>
       </ul>
 
     </header>
