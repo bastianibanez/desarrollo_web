@@ -12,7 +12,7 @@ async function request(path, options = {}) {
 
   const res = await fetch(BASE + path, {
     ...options,
-    headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }
+    headers
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail);

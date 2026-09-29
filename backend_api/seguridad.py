@@ -33,6 +33,7 @@ def crear_sesion(conn, usuario_id: int) -> str:
             "INSERT INTO sesiones VALUES (?,?,?)",
             (token_hash, usuario_id, expira.isoformat()),
         )
+    return token
 
 
 def usuario_actual(x_user_session: str = Header(default=""), conn=Depends(db.get_db)):
