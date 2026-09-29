@@ -26,8 +26,7 @@ services:
 
   backend_api:
     build: ./backend_api
-    ports:
-      - "9000:9000"
+    # Sin "ports": solo el gateway (misma red de Compose) puede llegar al backend
     environment:
       INTERNAL_GATEWAY_SECRET: ${BACKEND_SHARED_SECRET}
     volumes:
