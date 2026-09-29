@@ -77,34 +77,16 @@
 
               <div class="border rounded-3 p-3 p-md-4 mb-4">
                 <h3 class="h6 text-body-secondary mb-3">Datos del comprador</h3>
-                <div class="row g-3">
-                  <div class="col-sm-6">
-                    <label for="nombres" class="form-label">Nombres</label>
-                    <input type="text" class="form-control" id="nombres" name="nombres" autocomplete="given-name"
-                      placeholder="Ana María" maxlength="100" pattern=".*\S.*" required />
-                  </div>
-                  <div class="col-sm-6">
-                    <label for="apellidos" class="form-label">Apellidos</label>
-                    <input type="text" class="form-control" id="apellidos" name="apellidos" autocomplete="family-name"
-                      placeholder="Soto Pérez" maxlength="100" pattern=".*\S.*" required />
-                  </div>
-                  <div class="col-sm-6">
-                    <label for="rut" class="form-label">RUT</label>
-                    <input type="text" class="form-control" id="rut" name="rut" placeholder="12.345.678-5"
-                      maxlength="13" pattern=".*\S.*" required />
-                  </div>
-                  <div class="col-sm-6">
-                    <label for="telefono" class="form-label">Teléfono <span
-                        class="text-body-secondary">(opcional)</span></label>
-                    <input type="tel" class="form-control" id="telefono" name="telefono" autocomplete="tel"
-                      placeholder="+56 9 1234 5678" maxlength="20" />
-                  </div>
-                  <div class="col-12">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" autocomplete="email"
-                      placeholder="ana@correo.cl" maxlength="150" required />
-                  </div>
-                </div>
+                <dl class="row mb-0">
+                  <dt class="col-sm-4 fw-normal text-body-secondary">Nombre</dt>
+                  <dd id="comprador-nombre" class="col-sm-8"></dd>
+                  <dt class="col-sm-4 fw-normal text-body-secondary">RUT</dt>
+                  <dd id="comprador-rut" class="col-sm-8"></dd>
+                  <dt class="col-sm-4 fw-normal text-body-secondary">Correo</dt>
+                  <dd id="comprador-email" class="col-sm-8"></dd>
+                  <dt class="col-sm-4 fw-normal text-body-secondary">Teléfono</dt>
+                  <dd id="comprador-telefono" class="col-sm-8 mb-0"></dd>
+                </dl>
               </div>
 
               <div class="border rounded-3 p-3 p-md-4">
@@ -155,7 +137,7 @@
                   </div>
                 </dl>
               </div>
-              <button id="btn-pagar" type="submit" class="btn btn-success btn-lg w-100 mt-4">Pagar</button>
+              <button id="btn-pagar" type="submit" class="btn btn-success btn-lg w-100 mt-4">Crear pedido</button>
             </section>
           </div>
         </form>

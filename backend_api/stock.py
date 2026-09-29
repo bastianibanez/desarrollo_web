@@ -9,11 +9,10 @@ def demanda_items(conn, items) -> Counter:
             existe = conn.execute(
                 "SELECT 1 FROM productos WHERE id = ?", (item.producto_id,)
             ).fetchone()
-
-        if existe is None:
-            raise HTTPException(400, "Producto no existe")
-        demanda[item.producto_id] += item.cantidad
-        continue
+            if existe is None:
+                raise HTTPException(400, "Producto no existe")
+            demanda[item.producto_id] += item.cantidad
+            continue
 
         combo = conn.execute(
             "SELECT 1 FROM combos WHERE id = ?", (item.combo_id,)
@@ -37,7 +36,7 @@ def validar_stock(conn, demanda: Counter) -> None:
     for producto_id, cantidad in demanda.items():
         producto = conn.execute(
             "SELECT nombre, stock FROM productos WHERE id = ?", (producto_id,)
-        )
+        ).fetchone()
         if producto is None or producto["stock"] < cantidad:
             nombre = producto["nombre"] if producto else str(producto_id)
-            raise HTTPException(409, f"Stock insuficiente: {nombre}'")
+            raise HTTPException(409, f"Stock insuficiente: {nombre}")
