@@ -48,7 +48,6 @@ class ItemIn(BaseModel):
 
 
 class OrdenIn(BaseModel):
-    cliente: ClienteIn
     direccion: DireccionIn
     items: list[ItemIn] = Field(min_length=1)
 

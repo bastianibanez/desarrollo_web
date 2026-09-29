@@ -30,6 +30,7 @@ from seguridad import (
     usuario_actual,
     usuario_opcional,
 )
+from stock import demanda_items, validar_stock
 from correo import enviar_correo
 
 logger = logging.getLogger(__name__)
@@ -307,7 +308,12 @@ def normalizar_rut(rut: str) -> str:
 
 
 @app.post("/ordenes", status_code=201, dependencies=[Depends(verify_gateway)])
-def crear_orden(orden: OrdenIn, db: Db):
+def crear_orden(orden: OrdenIn, db: Db, usuario=Depends(requiere("cliente"))):
+    if not usuario["email_verificado_at"] or not usuario["cliente_id"]:
+        raise HTTPException(403, "Cliente sin correo verificado")
+    cliente_id = usuario["cliente_id"]
+    validar_stock(db, demanda_items(db, orden.items))
+
     envio = db.execute(
         "SELECT costo FROM costos_envio WHERE comuna_id = ?",
         (orden.direccion.comuna_id,),
@@ -336,22 +342,8 @@ def crear_orden(orden: OrdenIn, db: Db):
     subtotal = sum(cantidad * precio for _, _, cantidad, precio in lineas)
     costo_envio = envio["costo"]
     total = subtotal + costo_envio
-    rut = normalizar_rut(orden.cliente.rut)
 
     with db:
-        existente = db.execute(
-            "SELECT id FROM clientes WHERE rut = ?", (rut,)
-        ).fetchone()
-        if existente is None:
-            c = orden.cliente
-            cur = db.execute(
-                "INSERT INTO clientes (nombres, apellidos, rut, email, telefono) VALUES (?,?,?,?,?)",
-                (c.nombres, c.apellidos, rut, c.email, c.telefono),
-            )
-            cliente_id = cur.lastrowid
-        else:
-            cliente_id = existente["id"]
-
         d = orden.direccion
         cur = db.execute(
             "INSERT INTO ordenes (cliente_id, calle, numero, departamento, comuna_id, subtotal, costo_envio, total) VALUES (?,?,?,?,?,?,?,?)",
@@ -377,6 +369,7 @@ def crear_orden(orden: OrdenIn, db: Db):
         "subtotal": subtotal,
         "costo_envio": costo_envio,
         "total": total,
+        "estado": "pendiente",
     }
 
 
