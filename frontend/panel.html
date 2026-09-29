@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" defer></script>
+  <title>Panel | FitExpress</title>
+  <style>
+    .site-logo {
+      height: 28px;
+      width: auto;
+    }
+
+    header .nav {
+      --bs-nav-link-color: #2e7d32;
+      --bs-nav-link-hover-color: #173b1b;
+    }
+
+    header .nav-link:focus-visible {
+      box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
+    }
+
+    .nav-tabs {
+      --bs-nav-link-color: #2e7d32;
+      --bs-nav-link-hover-color: #173b1b;
+    }
+
+    /* Al imprimir solo se muestra la orden de despacho */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      #orden-impresa,
+      #orden-impresa * {
+        visibility: visible;
+      }
+
+      #orden-impresa {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header
+      class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
+      <div class="col-auto mb-2 mb-md-0">
+        <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
+          <img class="site-logo" src="https://pub-1a2cdad7d229486fb35e3638126722d1.r2.dev/logo-trim.webp" alt="FitExpress" width="189" height="28" />
+        </a>
+      </div>
+
+      <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+        <li><a href="index.html#combos" class="nav-link px-2">Combos</a></li>
+        <li><a href="index.html#bowls" class="nav-link px-2">Bowls</a></li>
+        <li><a href="index.html#bebestibles" class="nav-link px-2">Bebestibles</a></li>
+        <li><a href="index.html#snacks" class="nav-link px-2">Snacks</a></li>
+        <li><a href="panel.html" class="nav-link px-2" aria-current="page">Panel</a></li>
+      </ul>
+    </header>
+
+    <main class="pb-5">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+          <h1 class="h2 text-success mb-0">Panel</h1>
+          <p id="panel-usuario" class="text-body-secondary mb-0">Maqueta: se muestran las pestañas de todos los roles</p>
+        </div>
+        <button id="btn-logout" type="button" class="btn btn-outline-secondary">Cerrar sesión</button>
+      </div>
+
+      <div id="panel-alert"></div>
+
+      <!--
+        Cada pestaña y su contenido llevan data-roles: el rol que ve esa función.
+        administrador: clientes, usuarios, productos, caja, anular, reporte
+        dueno:         productos, reporte
+        cajero:        caja
+        despacho:      despacho
+      -->
+      <ul class="nav nav-tabs mb-4" role="tablist">
+        <li class="nav-item" role="presentation" data-roles="administrador">
+          <button class="nav-link active" id="tab-clientes" type="button" role="tab"
+            data-bs-toggle="tab" data-bs-target="#pane-clientes" aria-controls="pane-clientes"
+            aria-selected="true">Clientes</button>
+        </li>
+        <li class="nav-item" role="presentation" data-roles="administrador">
+          <button class="nav-link" id="tab-usuarios" type="button" role="tab"
+            data-bs-toggle="tab" data-bs-target="#pane-usuarios" aria-controls="pane-usuarios"
+            aria-selected="false">Usuarios</button>
+        </li>
+        <li class="nav-item" role="presentation" data-roles="administrador dueno">
+          <button class="nav-link" id="tab-productos" type="button" role="tab"
+            data-bs-toggle="tab" data-bs-target="#pane-productos" aria-controls="pane-productos"
+            aria-selected="false">Productos</button>
+        </li>
+        <li class="nav-item" role="presentation" data-roles="administrador">
+          <button class="nav-link" id="tab-asignar-caja" type="button" role="tab"
+            data-bs-toggle="tab" data-bs-target="#pane-asignar-caja" aria-controls="pane-asignar-caja"
+            aria-selected="false">Asignar caja</button>
+        </li>
+        <li class="nav-item" role="presentation" data-roles="administrador">
+          <button class="nav-link" id="tab-anular" type="button" role="tab"
+            data-bs-toggle="tab" data-bs-target="#pane-anular" aria-controls="pane-anular"
+            aria-selected="false">Anular pedido</button>
+        </li>
+        <li class="nav-item" role="presentation" data-roles="administrador dueno">
+          <button class="nav-link" id="tab-reporte" type="button" role="tab"
+            data-bs-toggle="tab" data-bs-target="#pane-reporte" aria-controls="pane-reporte"
+            aria-selected="false">Reporte de ventas</button>
+        </li>
+        <li class="nav-item" role="presentation" data-roles="cajero">
+          <button class="nav-link" id="tab-caja" type="button" role="tab"
+            data-bs-toggle="tab" data-bs-target="#pane-caja" aria-controls="pane-caja"
+            aria-selected="false">Caja</button>
+        </li>
+        <li class="nav-item" role="presentation" data-roles="despacho">
+          <button class="nav-link" id="tab-despacho" type="button" role="tab"
+            data-bs-toggle="tab" data-bs-target="#pane-despacho" aria-controls="pane-despacho"
+            aria-selected="false">Despacho</button>
+        </li>
+      </ul>
+
+      <div class="tab-content">
+
+        <!-- ============ CLIENTES (administrador) ============ -->
+        <div class="tab-pane fade show active" id="pane-clientes" data-roles="administrador"
+          role="tabpanel" aria-labelledby="tab-clientes" tabindex="0">
+          <div class="border rounded-3 p-3 p-md-4 mb-4">
+            <h2 class="h6 text-body-secondary mb-3">Registrar o editar cliente</h2>
+            <form id="admin-cliente-form">
+              <input type="hidden" name="id" />
+              <div class="row g-3">
+                <div class="col-sm-6 col-lg-4">
+                  <label for="ac-nombres" class="form-label">Nombres</label>
+                  <input type="text" class="form-control" id="ac-nombres" name="nombres"
+                    maxlength="100" pattern=".*\S.*" required />
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                  <label for="ac-apellidos" class="form-label">Apellidos</label>
+                  <input type="text" class="form-control" id="ac-apellidos" name="apellidos"
+                    maxlength="100" pattern=".*\S.*" required />
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                  <label for="ac-rut" class="form-label">RUT</label>
+                  <input type="text" class="form-control" id="ac-rut" name="rut"
+                    placeholder="12.345.678-5" maxlength="13" pattern=".*\S.*" required />
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                  <label for="ac-fecha-nacimiento" class="form-label">Fecha de nacimiento</label>
+                  <input type="date" class="form-control" id="ac-fecha-nacimiento" name="fecha_nacimiento" required />
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                  <label for="ac-sexo" class="form-label">Sexo</label>
+                  <select class="form-select" id="ac-sexo" name="sexo" required>
+                    <option value="" selected disabled>Elige una opción</option>
+                    <option value="femenino">Femenino</option>
+                    <option value="masculino">Masculino</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                  <label for="ac-telefono" class="form-label">Teléfono</label>
+                  <input type="tel" class="form-control" id="ac-telefono" name="telefono"
+                    maxlength="20" required />
+                </div>
+                <div class="col-12">
+                  <label for="ac-email" class="form-label">Correo electrónico</label>
+                  <input type="email" class="form-control" id="ac-email" name="email"
+                    maxlength="150" required />
+                  <div class="form-text">El cliente recibe un enlace en este correo para confirmarlo y elegir su contraseña.</div>
+                </div>
+                <div class="col-12">
+                  <label for="ac-direccion" class="form-label">Dirección</label>
+                  <input type="text" class="form-control" id="ac-direccion" name="direccion"
+                    maxlength="200" pattern=".*\S.*" required />
+                </div>
+                <div class="col-md-4">
+                  <label for="ac-comuna" class="form-label">Comuna</label>
+                  <select class="form-select" id="ac-comuna" name="comuna_id" required>
+                    <option value="" selected disabled>Elige una comuna</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="ac-provincia" class="form-label">Provincia</label>
+                  <input type="text" class="form-control" id="ac-provincia" name="provincia"
+                    maxlength="100" pattern=".*\S.*" required />
+                </div>
+                <div class="col-md-4">
+                  <label for="ac-region" class="form-label">Región</label>
+                  <input type="text" class="form-control" id="ac-region" name="region"
+                    maxlength="100" pattern=".*\S.*" required />
+                </div>
+              </div>
+              <button type="submit" class="btn btn-success mt-4">Guardar cliente</button>
+            </form>
+          </div>
+
+          <div class="border rounded-3 p-3 p-md-4 mb-4">
+            <h2 class="h6 text-body-secondary mb-3">Clientes</h2>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>N°</th>
+                    <th>Nombre</th>
+                    <th>RUT</th>
+                    <th>Correo</th>
+                    <th>Correo verificado</th>
+                    <th>Estado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="admin-clientes">
+                  <tr><td colspan="7" class="text-body-secondary">Cargando…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ USUARIOS (administrador) ============ -->
+        <div class="tab-pane fade" id="pane-usuarios" data-roles="administrador"
+          role="tabpanel" aria-labelledby="tab-usuarios" tabindex="0">
+          <div class="border rounded-3 p-3 p-md-4 mb-4">
+            <h2 class="h6 text-body-secondary mb-3">Crear o editar funcionario</h2>
+            <form id="admin-usuario-form">
+              <input type="hidden" name="id" />
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label for="au-identificador" class="form-label">Usuario</label>
+                  <input type="text" class="form-control" id="au-identificador" name="identificador"
+                    autocomplete="off" maxlength="150" pattern=".*\S.*" required />
+                </div>
+                <div class="col-md-4">
+                  <label for="au-rol" class="form-label">Rol</label>
+                  <select class="form-select" id="au-rol" name="rol" required>
+                    <option value="" selected disabled>Elige un rol</option>
+                    <option value="administrador">Administrador</option>
+                    <option value="cajero">Cajero</option>
+                    <option value="despacho">Despacho</option>
+                    <option value="dueno">Dueño</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="au-password" class="form-label">Contraseña inicial</label>
+                  <input type="password" class="form-control" id="au-password" name="password"
+                    autocomplete="new-password" minlength="8" />
+                  <div class="form-text">Obligatoria al crear; déjala vacía al editar.</div>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-success mt-4">Guardar usuario</button>
+            </form>
+          </div>
+
+          <div class="border rounded-3 p-3 p-md-4 mb-4">
+            <h2 class="h6 text-body-secondary mb-3">Usuarios</h2>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>N°</th>
+                    <th>Usuario</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="admin-usuarios">
+                  <tr><td colspan="5" class="text-body-secondary">Cargando…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ PRODUCTOS (administrador y dueño) ============ -->
+        <div class="tab-pane fade" id="pane-productos" data-roles="administrador dueno"
+          role="tabpanel" aria-labelledby="tab-productos" tabindex="0">
+          <div class="border rounded-3 p-3 p-md-4 mb-4">
+            <h2 class="h6 text-body-secondary mb-3">Crear o editar producto</h2>
+            <form id="producto-form">
+              <input type="hidden" name="id" />
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="pr-nombre" class="form-label">Nombre</label>
+                  <input type="text" class="form-control" id="pr-nombre" name="nombre"
+                    maxlength="100" pattern=".*\S.*" required />
+                </div>
+                <div class="col-md-6">
+                  <label for="pr-categoria" class="form-label">Categoría</label>
+                  <select class="form-select" id="pr-categoria" name="categoria_id" required>
+                    <option value="" selected disabled>Elige una categoría</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label for="pr-descripcion" class="form-label">Descripción <span
+                      class="text-body-secondary">(opcional)</span></label>
+                  <input type="text" class="form-control" id="pr-descripcion" name="descripcion"
+                    maxlength="255" />
+                </div>
+                <div class="col-sm-4">
+                  <label for="pr-precio" class="form-label">Precio (CLP)</label>
+                  <input type="number" class="form-control" id="pr-precio" name="precio"
+                    min="0" step="1" required />
+                </div>
+                <div class="col-sm-4">
+                  <label for="pr-precio-oferta" class="form-label">Precio de oferta <span
+                      class="text-body-secondary">(opcional)</span></label>
+                  <input type="number" class="form-control" id="pr-precio-oferta" name="precio_oferta"
+                    min="0" step="1" />
+                  <div class="form-text">Menor que el precio. Lo ven solo los clientes registrados.</div>
+                </div>
+                <div class="col-sm-4">
+                  <label for="pr-stock" class="form-label">Stock</label>
+                  <input type="number" class="form-control" id="pr-stock" name="stock"
+                    min="0" step="1" required />
+                  <div class="form-text">Con stock 0 el producto se muestra como agotado.</div>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-success mt-4">Guardar producto</button>
+            </form>
+          </div>
+
+          <div class="border rounded-3 p-3 p-md-4 mb-4">
+            <h2 class="h6 text-body-secondary mb-3">Productos</h2>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>N°</th>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th class="text-end">Precio</th>
+                    <th class="text-end">Oferta</th>
+                    <th class="text-end">Stock</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="admin-productos">
+                  <tr><td colspan="7" class="text-body-secondary">Cargando…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ ASIGNAR CAJA (administrador) ============ -->
+        <div class="tab-pane fade" id="pane-asignar-caja" data-roles="administrador"
+          role="tabpanel" aria-labelledby="tab-asignar-caja" tabindex="0">
+          <div class="border rounded-3 p-3 p-md-4 mb-4">
+            <h2 class="h6 text-body-secondary mb-3">Cajero de la caja Web</h2>
+            <p class="mb-3">Cajero asignado: <span id="caja-actual" class="fw-semibold">caja@fitexpress.cl</span></p>
+            <form id="caja-form">
+              <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                  <label for="caja-cajero" class="form-label">Funcionario con rol cajero</label>
+                  <select class="form-select" id="caja-cajero" name="cajero_id" required>
+                    <option value="" selected disabled>Elige un cajero</option>
+                    <option value="2">caja@fitexpress.cl</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <button type="submit" class="btn btn-success">Asignar a la caja Web</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- ============ ANULAR PEDIDO (administrador) ============ -->
+        <div class="tab-pane fade" id="pane-anular" data-roles="administrador"
+          role="tabpanel" aria-labelledby="tab-anular" tabindex="0">
+          <div class="border rounded-3 p-3 p-md-4 mb-4">
+            <h2 class="h6 text-body-secondary mb-3">Anular un pedido por un cliente</h2>
+            <form id="admin-anular-form">
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <label for="an-orden" class="form-label">N° de pedido</label>
+                  <input type="number" class="form-control" id="an-orden" name="orden_id" min="1" required />
+                </div>
+                <div class="col-md-9">
+                  <label for="an-motivo" class="form-label">Motivo</label>
+                  <input type="text" class="form-control" id="an-motivo" name="motivo"
+                    maxlength="255" pattern=".*\S.*" required />
+                </div>
+              </div>
+              <button type="submit" class="btn btn-danger mt-4">Anular pedido</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- ============ REPORTE DE VENTAS (administrador y dueño) ============ -->
+        <div class="tab-pane fade" id="pane-reporte" data-roles="administrador dueno"
+          role="tabpanel" aria-labelledby="tab-reporte" tabindex="0">
+          <div class="border rounded-3 p-3 p-md-4 mb-4">
+            <h2 class="h6 text-body-secondary mb-3">Período</h2>
+            <form id="reporte-form">
+              <div class="row g-3 align-items-end">
+                <div class="col-sm-4">
+                  <label for="rep-desde" class="form-label">Desde</label>
+                  <input type="date" class="form-control" id="rep-desde" name="desde" required />
+                </div>
+                <div class="col-sm-4">
+                  <label for="rep-hasta" class="form-label">Hasta</label>
+                  <input type="date" class="form-control" id="rep-hasta" name="hasta" required />
+                </div>
+                <div class="col-sm-4">
+                  <button type="submit" class="btn btn-success">Consultar</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div class="border rounded-3 p-3 p-md-4 mb-4">
+            <h2 class="h6 text-body-secondary mb-3">Ventas del período</h2>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>N° venta</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th class="text-end">Total</th>
+                  </tr>
+                </thead>
+                <tbody id="reporte-ventas">
+                  <tr><td>1</td><td>28-09-2026 13:41</td><td>Ana Soto</td><td class="text-end">$9.990</td></tr>
+                  <tr><td>2</td><td>29-09-2026 10:50</td><td>Luisa Vera</td><td class="text-end">$11.480</td></tr>
+                  <tr><td>3</td><td>29-09-2026 11:20</td><td>Pedro Rojas</td><td class="text-end">$8.490</td></tr>
+                </tbody>
+                <tfoot>
+                  <tr class="fw-semibold">
+                    <td colspan="3">Total del período</td>
+                    <td id="reporte-total" class="text-end">$29.960</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ CAJA (cajero) ============ -->
+        <div class="tab-pane fade" id="pane-caja" data-roles="cajero"
+          role="tabpanel" aria-labelledby="tab-caja" tabindex="0">
+          <div class="border rounded-3 p-3 p-md-4 mb-4">
+            <h2 class="h6 text-body-secondary mb-3">Pedidos pendientes de pago</h2>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>N°</th>
+                    <th>Cliente</th>
+                    <th>Fecha</th>
+                    <th class="text-end">Total</th>
+                    <th>Último resultado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="caja-pendientes">
+                  <tr>
+                    <td>12</td><td>Ana Soto</td><td>29-09-2026 10:15</td>
+                    <td class="text-end">$10.990</td><td>—</td>
+                    <td class="text-end">
+                      <button type="button" class="btn btn-sm btn-success" data-pago="aprobado">Aprobar pago simulado</button>
+                      <button type="button" class="btn btn-sm btn-outline-danger" data-pago="rechazado">Rechazar</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>13</td><td>Pedro Rojas</td><td>29-09-2026 10:32</td>
+                    <td class="text-end">$8.490</td>
+                    <td><span class="badge text-bg-warning">rechazado</span></td>
+                    <td class="text-end">
+                      <button type="button" class="btn btn-sm btn-success" data-pago="aprobado">Aprobar pago simulado</button>
+                      <button type="button" class="btn btn-sm btn-outline-danger" data-pago="rechazado">Rechazar</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="border rounded-3 p-3 p-md-4 mb-4">
+            <h2 class="h6 text-body-secondary mb-3">Boleta de venta</h2>
+            <form id="comprobante-form">
+              <div class="row g-3 align-items-end">
+                <div class="col-sm-4 col-md-3">
+                  <label for="comp-venta" class="form-label">N° de venta</label>
+                  <input type="number" class="form-control" id="comp-venta" name="venta_id" min="1" required />
+                </div>
+                <div class="col-sm-8 col-md-9">
+                  <button type="submit" class="btn btn-success">Emitir y enviar</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- ============ DESPACHO (encargado de despacho) ============ -->
+        <div class="tab-pane fade" id="pane-despacho" data-roles="despacho"
+          role="tabpanel" aria-labelledby="tab-despacho" tabindex="0">
+          <div class="border rounded-3 p-3 p-md-4 mb-4">
+            <h2 class="h6 text-body-secondary mb-3">Pedidos pagados, en orden de llegada</h2>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>N°</th>
+                    <th>Pagado</th>
+                    <th>Cliente</th>
+                    <th class="text-end">Total</th>
+                    <th>Impresa</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="despacho-cola">
+                  <tr>
+                    <td>11</td><td>28-09-2026 13:41</td><td>Ana Soto</td>
+                    <td class="text-end">$9.990</td>
+                    <td><span class="badge text-bg-success">Sí</span></td>
+                    <td class="text-end"><button type="button" class="btn btn-sm btn-outline-success">Ver</button></td>
+                  </tr>
+                  <tr>
+                    <td>14</td><td>29-09-2026 10:50</td><td>Luisa Vera</td>
+                    <td class="text-end">$11.480</td>
+                    <td><span class="badge text-bg-secondary">No</span></td>
+                    <td class="text-end"><button type="button" class="btn btn-sm btn-outline-success">Ver</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="border rounded-3 p-3 p-md-4 mb-4">
+            <h2 class="h6 text-body-secondary mb-3">Orden seleccionada</h2>
+
+            <!-- Solo este bloque se imprime -->
+            <div id="orden-impresa">
+              <h3 class="h5">FitExpress · Orden #<span id="oi-numero">14</span></h3>
+              <p class="mb-1">Pagado: <span id="oi-pagado">29-09-2026 10:50</span></p>
+              <p class="mb-1">Cliente: <span id="oi-cliente">Luisa Vera Mora</span></p>
+              <p class="mb-3">Dirección: <span id="oi-direccion">Los Leones 456, Providencia</span></p>
+              <table class="table table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th class="text-end">Cantidad</th>
+                  </tr>
+                </thead>
+                <tbody id="oi-items">
+                  <tr><td>Bowl Quinoa</td><td class="text-end">2</td></tr>
+                  <tr><td>Jugo Verde</td><td class="text-end">1</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mt-3">
+              <button id="btn-imprimir" type="button" class="btn btn-success">Imprimir</button>
+              <button id="btn-preparando" type="button" class="btn btn-outline-success">Preparando</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+  <script type="module" src="/src/panel.js"></script>
+</body>
+
+</html>

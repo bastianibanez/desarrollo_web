@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Confirmar correo | FitExpress</title>
+  <style>
+    .site-logo {
+      height: 28px;
+      width: auto;
+    }
+
+    header .nav {
+      --bs-nav-link-color: #2e7d32;
+      --bs-nav-link-hover-color: #173b1b;
+    }
+
+    header .nav-link:focus-visible {
+      box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header
+      class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
+      <div class="col-auto mb-2 mb-md-0">
+        <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
+          <img class="site-logo" src="https://pub-1a2cdad7d229486fb35e3638126722d1.r2.dev/logo-trim.webp" alt="FitExpress" width="189" height="28" />
+        </a>
+      </div>
+
+      <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+        <li><a href="index.html#combos" class="nav-link px-2">Combos</a></li>
+        <li><a href="index.html#bowls" class="nav-link px-2">Bowls</a></li>
+        <li><a href="index.html#bebestibles" class="nav-link px-2">Bebestibles</a></li>
+        <li><a href="index.html#snacks" class="nav-link px-2">Snacks</a></li>
+        <li>
+          <a href="carrito.html" class="nav-link px-2">
+            Carrito <span id="carrito-badge" class="badge rounded-pill text-bg-success"></span>
+          </a>
+        </li>
+        <li><a href="acceso.html" class="nav-link px-2">Acceso</a></li>
+      </ul>
+    </header>
+
+    <main class="pb-5">
+      <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+          <div class="border rounded-3 p-3 p-md-5">
+            <h1 class="h2 text-center text-success mb-2">Confirma tu correo</h1>
+            <p class="text-center text-body-secondary mb-4">
+              Elige una contraseña para activar tu cuenta.
+            </p>
+            <div id="confirmar-alert"></div>
+
+            <!-- El enlace del correo trae ?cliente=...&codigo=...; el script los copia a estos campos -->
+            <form id="confirmar-form">
+              <input type="hidden" id="conf-cliente-id" name="cliente_id" />
+              <input type="hidden" id="conf-codigo" name="codigo" />
+
+              <div class="mb-4">
+                <label for="conf-password" class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="conf-password" name="password"
+                  autocomplete="new-password" minlength="8" required />
+                <div class="form-text">Mínimo 8 caracteres.</div>
+              </div>
+              <button id="btn-confirmar" type="submit" class="btn btn-success btn-lg w-100">Activar cuenta</button>
+            </form>
+
+            <!-- Se muestra tras confirmar -->
+            <div id="confirmar-listo" class="text-center" hidden>
+              <p class="mb-3">Tu correo quedó confirmado.</p>
+              <a href="acceso.html" class="btn btn-success btn-lg w-100">Ingresar</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="/src/confirmar.js"></script>
+</body>
+
+</html>
