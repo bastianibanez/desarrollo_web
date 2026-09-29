@@ -164,3 +164,34 @@ class VerificarCorreoIn(BaseModel):
 class LoginIn(BaseModel):
     identificador: str
     password: str
+
+
+class ClienteEdicionIn(BaseModel):
+    nombres: str | None = Field(default=None, min_length=1)
+    apellidos: str | None = Field(default=None, min_length=1)
+    rut: str | None = Field(default=None, min_length=3)
+    direccion: str | None = Field(default=None, min_length=1)
+    comuna_id: int | None = None
+    provincia: str | None = Field(default=None, min_length=1)
+    region: str | None = Field(default=None, min_length=1)
+    fecha_nacimiento: date | None = None
+    sexo: str | None = Field(default=None, min_length=1)
+    email: EmailStr | None = None
+    telefono: str | None = Field(default=None, min_length=1)
+    activo: bool | None = None
+
+
+FuncionarioRol = Literal["administrador", "cajero", "despacho", "dueno"]
+
+
+class UsuarioIn(BaseModel):
+    identificador: str = Field(min_length=1)
+    rol: FuncionarioRol
+    password: str = Field(min_length=8)
+
+
+class UsuarioEdicionIn(BaseModel):
+    identificador: str | None = Field(default=None, min_length=1)
+    rol: FuncionarioRol | None = None
+    password: str | None = Field(default=None, min_length=8)
+    activo: bool | None = None

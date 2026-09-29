@@ -185,9 +185,6 @@
                   <label for="ac-comuna" class="form-label">Comuna</label>
                   <select class="form-select" id="ac-comuna" name="comuna_id" required>
                     <option value="" selected disabled>Elige una comuna</option>
-                    <option value="1">Providencia</option>
-                    <option value="2">Las Condes</option>
-                    <option value="3">Ñuñoa</option>
                   </select>
                 </div>
                 <div class="col-md-4">
@@ -221,33 +218,7 @@
                   </tr>
                 </thead>
                 <tbody id="admin-clientes">
-                  <tr>
-                    <td>1</td><td>Ana María Soto Pérez</td><td>12.345.678-5</td><td>ana@correo.cl</td>
-                    <td><span class="badge text-bg-success">Sí</span></td>
-                    <td><span class="badge text-bg-success">Activo</span></td>
-                    <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-outline-secondary">Editar</button>
-                      <button type="button" class="btn btn-sm btn-outline-danger">Desactivar</button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>2</td><td>Pedro Rojas Díaz</td><td>9.876.543-3</td><td>pedro@correo.cl</td>
-                    <td><span class="badge text-bg-warning">Pendiente</span></td>
-                    <td><span class="badge text-bg-success">Activo</span></td>
-                    <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-outline-secondary">Editar</button>
-                      <button type="button" class="btn btn-sm btn-outline-danger">Desactivar</button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>3</td><td>Luisa Vera Mora</td><td>15.222.333-K</td><td>luisa@correo.cl</td>
-                    <td><span class="badge text-bg-success">Sí</span></td>
-                    <td><span class="badge text-bg-secondary">Inactivo</span></td>
-                    <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-outline-secondary">Editar</button>
-                      <button type="button" class="btn btn-sm btn-outline-success">Activar</button>
-                    </td>
-                  </tr>
+                  <tr><td colspan="7" class="text-body-secondary">Cargando…</td></tr>
                 </tbody>
               </table>
             </div>
@@ -302,38 +273,7 @@
                   </tr>
                 </thead>
                 <tbody id="admin-usuarios">
-                  <tr>
-                    <td>1</td><td>admin@fitexpress.cl</td><td>administrador</td>
-                    <td><span class="badge text-bg-success">Activo</span></td>
-                    <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-outline-secondary">Editar</button>
-                      <button type="button" class="btn btn-sm btn-outline-danger">Desactivar</button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>2</td><td>caja@fitexpress.cl</td><td>cajero</td>
-                    <td><span class="badge text-bg-success">Activo</span></td>
-                    <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-outline-secondary">Editar</button>
-                      <button type="button" class="btn btn-sm btn-outline-danger">Desactivar</button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>3</td><td>despacho@fitexpress.cl</td><td>despacho</td>
-                    <td><span class="badge text-bg-success">Activo</span></td>
-                    <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-outline-secondary">Editar</button>
-                      <button type="button" class="btn btn-sm btn-outline-danger">Desactivar</button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>4</td><td>dueno@fitexpress.cl</td><td>dueno</td>
-                    <td><span class="badge text-bg-success">Activo</span></td>
-                    <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-outline-secondary">Editar</button>
-                      <button type="button" class="btn btn-sm btn-outline-danger">Desactivar</button>
-                    </td>
-                  </tr>
+                  <tr><td colspan="5" class="text-body-secondary">Cargando…</td></tr>
                 </tbody>
               </table>
             </div>
@@ -357,9 +297,6 @@
                   <label for="pr-categoria" class="form-label">Categoría</label>
                   <select class="form-select" id="pr-categoria" name="categoria_id" required>
                     <option value="" selected disabled>Elige una categoría</option>
-                    <option value="1">Bowls</option>
-                    <option value="2">Bebestibles</option>
-                    <option value="3">Snacks</option>
                   </select>
                 </div>
                 <div class="col-12">
@@ -407,39 +344,7 @@
                   </tr>
                 </thead>
                 <tbody id="admin-productos">
-                  <tr>
-                    <td>1</td><td>Bowl Quinoa</td><td>Bowls</td>
-                    <td class="text-end">$5.990</td><td class="text-end">$4.990</td><td class="text-end">20</td>
-                    <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-outline-secondary">Editar</button>
-                      <button type="button" class="btn btn-sm btn-outline-danger">Eliminar</button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>2</td><td>Bowl Salmón</td><td>Bowls</td>
-                    <td class="text-end">$6.990</td><td class="text-end">—</td>
-                    <td class="text-end"><span class="badge text-bg-danger">Agotado</span> 0</td>
-                    <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-outline-secondary">Editar</button>
-                      <button type="button" class="btn btn-sm btn-outline-danger">Eliminar</button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>3</td><td>Jugo Verde</td><td>Bebestibles</td>
-                    <td class="text-end">$2.990</td><td class="text-end">—</td><td class="text-end">35</td>
-                    <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-outline-secondary">Editar</button>
-                      <button type="button" class="btn btn-sm btn-outline-danger">Eliminar</button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>4</td><td>Barra de Granola</td><td>Snacks</td>
-                    <td class="text-end">$1.490</td><td class="text-end">$990</td><td class="text-end">50</td>
-                    <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-outline-secondary">Editar</button>
-                      <button type="button" class="btn btn-sm btn-outline-danger">Eliminar</button>
-                    </td>
-                  </tr>
+                  <tr><td colspan="7" class="text-body-secondary">Cargando…</td></tr>
                 </tbody>
               </table>
             </div>
@@ -665,6 +570,7 @@
       </div>
     </main>
   </div>
+  <script type="module" src="/src/panel.js"></script>
 </body>
 
 </html>

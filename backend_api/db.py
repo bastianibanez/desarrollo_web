@@ -114,7 +114,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
   password_hash TEXT,
   rol TEXT NOT NULL CHECK (rol IN
     ('cliente','administrador','cajero','despacho','dueno')),
-  activo INTEGER NOT NULL DEFAULT 1
+  activo INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 """
 
@@ -130,7 +132,9 @@ CAJAS = """
 CREATE TABLE IF NOT EXISTS cajas (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL UNIQUE,
-  cajero_id INTEGER REFERENCES usuarios(id)
+  cajero_id INTEGER REFERENCES usuarios(id),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 """
 
@@ -171,7 +175,8 @@ CREATE TABLE IF NOT EXISTS ventas (
   anulada_at TEXT,
   comprobante_emitido_at TEXT,
   comprobante_enviado_at TEXT,
-  ultimo_error_correo TEXT
+  ultimo_error_correo TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 """
 
