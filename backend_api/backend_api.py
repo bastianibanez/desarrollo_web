@@ -118,8 +118,12 @@ def registrar_cliente(datos: ClienteRegistroIn, db: Db):
         """,
             (cliente_id, email),
         )
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    enlace = f"{frontend_url}/confirmar.html?cliente={cliente_id}&codigo={codigo}"
     enviar_correo(
-        email, "Verifica tu correo FitExpress", f"Tu código de verificación es {codigo}"
+        email,
+        "Confirma tu cuenta FitExpress",
+        f"Confirma tu correo y elige tu contraseña aquí: {enlace}",
     )
     return {"cliente_id": cliente_id, "estado": "pendiente"}
 
