@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS productos (
   nombre TEXT NOT NULL,
   descripcion TEXT,
   precio INTEGER NOT NULL CHECK (precio >= 0),
+  precio_oferta INTEGER CHECK (precio_oferta >= 0 AND precio_oferta < precio),
   stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
   categoria_id INTEGER NOT NULL REFERENCES categorias(id),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -34,6 +35,7 @@ CREATE TABLE IF NOT EXISTS combos (
   nombre TEXT NOT NULL,
   descripcion TEXT,
   precio INTEGER NOT NULL CHECK (precio >= 0),
+  precio_oferta INTEGER CHECK (precio_oferta >= 0 AND precio_oferta < precio),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
