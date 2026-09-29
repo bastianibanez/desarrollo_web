@@ -68,19 +68,6 @@ CREATE TABLE IF NOT EXISTS costos_envio (
 );
 """
 
-CLIENTES = """
-CREATE TABLE IF NOT EXISTS clientes (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  nombres TEXT NOT NULL,
-  apellidos TEXT NOT NULL,
-  rut TEXT NOT NULL UNIQUE,
-  email TEXT NOT NULL,
-  telefono TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-"""
-
 LINEAS_ORDEN = """
 CREATE TABLE IF NOT EXISTS lineas_orden (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -110,6 +97,7 @@ CREATE TABLE IF NOT EXISTS clientes (
   email_verificado_at TEXT,
   codigo_hash TEXT,
   codigo_expira_at TEXT,
+  intentos_codigo INTEGER NOT NULL DEFAULT 0,
   activo INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -193,13 +181,11 @@ TABLAS = [
     COMUNAS,
     COSTOS_ENVIO,
     CLIENTES,
-    ORDENES,
-    LINEAS_ORDEN,
-    CLIENTES,
     USUARIOS,
     SESIONES,
     CAJAS,
     ORDENES,
+    LINEAS_ORDEN,
     VENTAS,
 ]
 
@@ -217,48 +203,6 @@ INDICES = [
     "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas(created_at);",
     "CREATE INDEX IF NOT EXISTS idx_ventas_caja ON ventas(caja_id);",
 ]
-
-# === Triggers ===
-
-PRODUCTO_ACTUALIZADO = """
-CREATE TRIGGER IF NOT EXISTS productos_updated_at
-AFTER UPDATE ON productos
-BEGIN
-  UPDATE productos SET updated_at = datetime('now') WHERE id = NEW.id;
-END;
-"""
-
-COMBO_ACTUALIZADO = """
-CREATE TRIGGER IF NOT EXISTS combos_updated_at
-AFTER UPDATE ON combos
-BEGIN
-  UPDATE combos SET updated_at = datetime('now') WHERE id = NEW.id;
-END;
-"""
-
-COSTO_ENVIO_ACTUALIZADO = """
-CREATE TRIGGER IF NOT EXISTS costos_envio_updated_at
-AFTER UPDATE ON costos_envio
-BEGIN
-  UPDATE costos_envio SET updated_at = datetime('now') WHERE id = NEW.id;
-END;
-"""
-
-CLIENTE_ACTUALIZADO = """
-CREATE TRIGGER IF NOT EXISTS clientes_updated_at
-AFTER UPDATE ON clientes
-BEGIN
-  UPDATE clientes SET updated_at = datetime('now') WHERE id = NEW.id;
-END;
-"""
-
-ORDEN_ACTUALIZADA = """
-CREATE TRIGGER IF NOT EXISTS ordenes_updated_at
-AFTER UPDATE ON ordenes
-BEGIN
-  UPDATE ordenes SET updated_at = datetime('now') WHERE id = NEW.id;
-END;
-"""
 
 # === Triggers ===
 
@@ -525,4 +469,3 @@ def get_db() -> Iterator[sqlite3.Connection]:
 
 if __name__ == "__main__":
     print(SCHEMA)
-
