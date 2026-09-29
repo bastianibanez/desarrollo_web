@@ -239,9 +239,7 @@ def actualizar_producto(
 
 
 @app.delete("/productos/{id}", dependencies=[Depends(verify_gateway)])
-def eliminar_producto(
-    id: int, db: Db, _=Depends(requiere("administrador", "dueno"))
-):
+def eliminar_producto(id: int, db: Db, _=Depends(requiere("administrador", "dueno"))):
     with db:
         cur = db.execute("DELETE FROM productos WHERE id = ?", (id,))
     if cur.rowcount == 0:
@@ -266,6 +264,19 @@ def listar_combos(db: Db):
                 (combo["id"],),
             )
         ]
+
+        componentes = db.execute(
+            """
+            SELECT lc.cantidad, p.stock
+            FROM lineas_combo lc
+            JOIN productos p ON p.id = lc.producto_id
+        """,
+            (combo["id"],),
+        ).fetchall()
+
+        combo["disponible"] = bool(componentes) and all(
+            f["stock"] >= f["cantidad"] for f in componentes
+        )
         resultado.append(combo)
     return resultado
 
