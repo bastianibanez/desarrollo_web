@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Mi cuenta | FitExpress</title>
+  <style>
+    .site-logo {
+      height: 28px;
+      width: auto;
+    }
+
+    header .nav {
+      --bs-nav-link-color: #2e7d32;
+      --bs-nav-link-hover-color: #173b1b;
+    }
+
+    header .nav-link:focus-visible {
+      box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header
+      class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
+      <div class="col-auto mb-2 mb-md-0">
+        <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
+          <img class="site-logo" src="https://pub-1a2cdad7d229486fb35e3638126722d1.r2.dev/logo-trim.webp" alt="FitExpress" width="189" height="28" />
+        </a>
+      </div>
+
+      <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+        <li><a href="index.html#combos" class="nav-link px-2">Combos</a></li>
+        <li><a href="index.html#bowls" class="nav-link px-2">Bowls</a></li>
+        <li><a href="index.html#bebestibles" class="nav-link px-2">Bebestibles</a></li>
+        <li><a href="index.html#snacks" class="nav-link px-2">Snacks</a></li>
+        <li>
+          <a href="carrito.html" class="nav-link px-2">
+            Carrito <span id="carrito-badge" class="badge rounded-pill text-bg-success"></span>
+          </a>
+        </li>
+        <li><a href="cuenta.html" class="nav-link px-2" aria-current="page">Mi cuenta</a></li>
+      </ul>
+    </header>
+
+    <main class="pb-5">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <h1 class="h2 text-success mb-0">Mi cuenta</h1>
+        <button id="btn-logout" type="button" class="btn btn-outline-secondary">Cerrar sesión</button>
+      </div>
+
+      <div id="cuenta-alert"></div>
+
+      <div class="border rounded-3 p-3 p-md-4 mb-4">
+        <h2 class="h6 text-body-secondary mb-3">Mis datos</h2>
+        <dl id="cliente-datos" class="row mb-0">
+          <dt class="col-sm-3 fw-normal text-body-secondary">Nombre</dt>
+          <dd id="dato-nombre" class="col-sm-9">Ana María Soto Pérez</dd>
+          <dt class="col-sm-3 fw-normal text-body-secondary">RUT</dt>
+          <dd id="dato-rut" class="col-sm-9">12.345.678-5</dd>
+          <dt class="col-sm-3 fw-normal text-body-secondary">Correo</dt>
+          <dd id="dato-email" class="col-sm-9">ana@correo.cl</dd>
+          <dt class="col-sm-3 fw-normal text-body-secondary">Teléfono</dt>
+          <dd id="dato-telefono" class="col-sm-9">+56 9 1234 5678</dd>
+          <dt class="col-sm-3 fw-normal text-body-secondary">Dirección</dt>
+          <dd id="dato-direccion" class="col-sm-9 mb-0">Av. Providencia 1234, depto. 402, Providencia</dd>
+        </dl>
+      </div>
+
+      <div class="border rounded-3 p-3 p-md-4 mb-4">
+        <h2 class="h6 text-body-secondary mb-3">Mis pedidos</h2>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th class="text-end">Total</th>
+                <th>Motivo de anulación</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="mis-ordenes">
+              <tr><td colspan="6" class="text-body-secondary">Aún no tienes pedidos.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="/src/cuenta.js"></script>
+</body>
+
+</html>

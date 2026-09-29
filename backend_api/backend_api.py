@@ -11,8 +11,23 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 import db
-from modelos import OrdenIn, ProductoIn, VerificarCorreoIn, ClienteRegistroIn, LoginIn
-from seguridad import hash_password, requiere, crear_sesion, password_valida
+from modelos import (
+    ClienteEdicionIn,
+    ClienteRegistroIn,
+    LoginIn,
+    OrdenIn,
+    ProductoIn,
+    UsuarioEdicionIn,
+    UsuarioIn,
+    VerificarCorreoIn,
+)
+from seguridad import (
+    crear_sesion,
+    hash_password,
+    password_valida,
+    requiere,
+    usuario_actual,
+)
 from correo import enviar_correo
 
 logger = logging.getLogger(__name__)
@@ -49,6 +64,9 @@ app.add_middleware(
 )
 
 Db = Annotated[sqlite3.Connection, Depends(db.get_db)]
+
+
+MAX_INTENTOS_CODIGO = 5
 
 
 def nuevo_codigo() -> tuple[str, str, str]:
@@ -118,10 +136,18 @@ def registrar_cliente(datos: ClienteRegistroIn, db: Db):
         """,
             (cliente_id, email),
         )
-    enviar_correo(
-        email, "Verifica tu correo FitExpress", f"Tu código de verificación es {codigo}"
-    )
+    enviar_enlace_confirmacion(email, cliente_id, codigo)
     return {"cliente_id": cliente_id, "estado": "pendiente"}
+
+
+def enviar_enlace_confirmacion(email: str, cliente_id: int, codigo: str) -> None:
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    enlace = f"{frontend_url}/confirmar.html?cliente={cliente_id}&codigo={codigo}"
+    enviar_correo(
+        email,
+        "Confirma tu cuenta FitExpress",
+        f"Confirma tu correo y elige tu contraseña aquí: {enlace}",
+    )
 
 
 @app.exception_handler(sqlite3.IntegrityError)
@@ -168,15 +194,18 @@ def validar_categoria(db: sqlite3.Connection, categoria_id: int) -> None:
 
 
 @app.post("/productos", status_code=201, dependencies=[Depends(verify_gateway)])
-def crear_producto(datos: ProductoIn, db: Db):
+def crear_producto(
+    datos: ProductoIn, db: Db, _=Depends(requiere("administrador", "dueno"))
+):
     validar_categoria(db, datos.categoria_id)
     with db:
         cur = db.execute(
-            "INSERT INTO productos (nombre, descripcion, precio, stock, categoria_id) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO productos (nombre, descripcion, precio, precio_oferta, stock, categoria_id) VALUES (?, ?, ?, ?, ?, ?)",
             (
                 datos.nombre,
                 datos.descripcion,
                 datos.precio,
+                datos.precio_oferta,
                 datos.stock,
                 datos.categoria_id,
             ),
@@ -187,15 +216,18 @@ def crear_producto(datos: ProductoIn, db: Db):
 
 
 @app.put("/productos/{id}", dependencies=[Depends(verify_gateway)])
-def actualizar_producto(id: int, datos: ProductoIn, db: Db):
+def actualizar_producto(
+    id: int, datos: ProductoIn, db: Db, _=Depends(requiere("administrador", "dueno"))
+):
     validar_categoria(db, datos.categoria_id)
     with db:
         cur = db.execute(
-            "UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, stock = ?, categoria_id = ? WHERE id = ?",
+            "UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, precio_oferta = ?, stock = ?, categoria_id = ? WHERE id = ?",
             (
                 datos.nombre,
                 datos.descripcion,
                 datos.precio,
+                datos.precio_oferta,
                 datos.stock,
                 datos.categoria_id,
                 id,
@@ -207,7 +239,9 @@ def actualizar_producto(id: int, datos: ProductoIn, db: Db):
 
 
 @app.delete("/productos/{id}", dependencies=[Depends(verify_gateway)])
-def eliminar_producto(id: int, db: Db):
+def eliminar_producto(
+    id: int, db: Db, _=Depends(requiere("administrador", "dueno"))
+):
     with db:
         cur = db.execute("DELETE FROM productos WHERE id = ?", (id,))
     if cur.rowcount == 0:
@@ -330,7 +364,7 @@ def crear_orden(orden: OrdenIn, db: Db):
 
 
 @app.get("/ordenes/{id}", dependencies=[Depends(verify_gateway)])
-def obtener_orden(id: int, db: Db):
+def obtener_orden(id: int, db: Db, usuario=Depends(usuario_actual)):
     fila = db.execute(
         """
         SELECT o.*, cl.nombres, cl.apellidos, cl.rut, cl.email, cl.telefono, cm.nombre AS comuna
@@ -341,7 +375,10 @@ def obtener_orden(id: int, db: Db):
         """,
         (id,),
     ).fetchone()
-    if fila is None:
+    # Un cliente solo ve sus órdenes; el resto de los perfiles ve cualquiera
+    if fila is None or (
+        usuario["rol"] == "cliente" and fila["cliente_id"] != usuario["cliente_id"]
+    ):
         raise HTTPException(404, "No encontrado")
 
     orden = dict(fila)
@@ -368,8 +405,17 @@ def verificar_correo(datos: VerificarCorreoIn, db: Db):
         raise HTTPException(400, "Verificación no disponible")
     if cliente["codigo_expira_at"] <= datetime.now(timezone.utc).isoformat():
         raise HTTPException(400, "Código vencido")
+    if cliente["intentos_codigo"] >= MAX_INTENTOS_CODIGO:
+        raise HTTPException(
+            429, "Demasiados intentos: pide al administrador un código nuevo"
+        )
     digest = hashlib.sha256(datos.codigo.encode()).hexdigest()
     if not secrets.compare_digest(digest, cliente["codigo_hash"]):
+        with db:
+            db.execute(
+                "UPDATE clientes SET intentos_codigo = intentos_codigo + 1 WHERE id = ?",
+                (datos.cliente_id,),
+            )
         raise HTTPException(400, "Código incorrecto")
     with db:
         db.execute(
@@ -413,3 +459,185 @@ def login(datos: LoginIn, db: Db):
     if usuario["rol"] == "cliente" and not usuario["email_verificado_at"]:
         raise HTTPException(403, "Correo sin verificar")
     return {"sesion": crear_sesion(db, usuario["id"]), "rol": usuario["rol"]}
+
+
+@app.post("/logout")
+def logout(
+    db: Db,
+    _=Depends(usuario_actual),
+    x_user_session: str = Header(default=""),
+):
+    token_hash = hashlib.sha256(x_user_session.encode()).hexdigest()
+    with db:
+        db.execute("DELETE FROM sesiones WHERE token_hash = ?", (token_hash,))
+    return {"ok": True}
+
+
+@app.get("/yo")
+def yo(db: Db, usuario=Depends(usuario_actual)):
+    datos = {
+        "id": usuario["id"],
+        "identificador": usuario["identificador"],
+        "rol": usuario["rol"],
+        "cliente_id": usuario["cliente_id"],
+    }
+    if usuario["cliente_id"] is not None:
+        perfil = db.execute(
+            """
+            SELECT c.nombres, c.apellidos, c.rut, c.email, c.telefono,
+                   c.direccion, cm.nombre AS comuna
+            FROM clientes c LEFT JOIN comunas cm ON cm.id = c.comuna_id
+            WHERE c.id = ?
+        """,
+            (usuario["cliente_id"],),
+        ).fetchone()
+        datos["perfil"] = dict(perfil)
+    return datos
+
+
+# === Mantenedor de clientes (administrador) ===
+COLUMNAS_CLIENTE = """id, nombres, apellidos, rut, email, telefono, direccion,
+    comuna_id, provincia, region, fecha_nacimiento, sexo,
+    email_verificado_at, activo"""
+
+
+@app.get("/admin/clientes")
+def listar_clientes(db: Db, _=Depends(requiere("administrador"))):
+    return [
+        dict(f)
+        for f in db.execute(f"SELECT {COLUMNAS_CLIENTE} FROM clientes ORDER BY id")
+    ]
+
+
+@app.patch("/admin/clientes/{id}")
+def editar_cliente(
+    id: int,
+    datos: ClienteEdicionIn,
+    db: Db,
+    _=Depends(requiere("administrador")),
+):
+    cliente = db.execute("SELECT * FROM clientes WHERE id = ?", (id,)).fetchone()
+    if cliente is None:
+        raise HTTPException(404, "No encontrado")
+
+    cambios = datos.model_dump(exclude_none=True)
+    if "rut" in cambios:
+        cambios["rut"] = normalizar_rut(cambios["rut"])
+        validar_digito_rut(cambios["rut"])
+    if "email" in cambios:
+        cambios["email"] = str(cambios["email"]).lower()
+        if cambios["email"] == cliente["email"]:
+            del cambios["email"]  # el formulario reenvía el correo sin cambios
+    if "fecha_nacimiento" in cambios:
+        cambios["fecha_nacimiento"] = cambios["fecha_nacimiento"].isoformat()
+    if "activo" in cambios:
+        cambios["activo"] = int(cambios["activo"])
+    if (
+        "comuna_id" in cambios
+        and db.execute(
+            "SELECT 1 FROM comunas WHERE id = ?", (cambios["comuna_id"],)
+        ).fetchone()
+        is None
+    ):
+        raise HTTPException(400, "Comuna no existe")
+
+    # Un correo nuevo, o editar una cuenta aún pendiente, genera un código nuevo
+    # y un enlace nuevo (así el administrador desbloquea a quien agotó los intentos)
+    pendiente = cliente["email_verificado_at"] is None
+    regenerar = "email" in cambios or (
+        pendiente and any(campo != "activo" for campo in cambios)
+    )
+    with db:
+        if cambios:
+            asignaciones = ", ".join(f"{campo} = ?" for campo in cambios)
+            db.execute(
+                f"UPDATE clientes SET {asignaciones} WHERE id = ?",
+                (*cambios.values(), id),
+            )
+        if "email" in cambios:
+            db.execute(
+                "UPDATE clientes SET email_verificado_at = NULL WHERE id = ?", (id,)
+            )
+            db.execute(
+                "UPDATE usuarios SET identificador = ? WHERE cliente_id = ?",
+                (cambios["email"], id),
+            )
+        if "activo" in cambios:
+            db.execute(
+                "UPDATE usuarios SET activo = ? WHERE cliente_id = ?",
+                (cambios["activo"], id),
+            )
+        if regenerar:
+            codigo, digest, expira = nuevo_codigo()
+            db.execute(
+                "UPDATE clientes SET codigo_hash = ?, codigo_expira_at = ?, intentos_codigo = 0 WHERE id = ?",
+                (digest, expira, id),
+            )
+    if regenerar:
+        enviar_enlace_confirmacion(cambios.get("email", cliente["email"]), id, codigo)
+    return dict(
+        db.execute(
+            f"SELECT {COLUMNAS_CLIENTE} FROM clientes WHERE id = ?", (id,)
+        ).fetchone()
+    )
+
+
+# === Mantenedor de usuarios / funcionarios (administrador) ===
+@app.get("/admin/usuarios")
+def listar_usuarios(db: Db, _=Depends(requiere("administrador"))):
+    return [
+        dict(f)
+        for f in db.execute(
+            "SELECT id, identificador, rol, activo FROM usuarios WHERE rol != 'cliente' ORDER BY id"
+        )
+    ]
+
+
+@app.post("/admin/usuarios", status_code=201)
+def crear_usuario(datos: UsuarioIn, db: Db, _=Depends(requiere("administrador"))):
+    identificador = datos.identificador.strip().lower()
+    with db:
+        cur = db.execute(
+            "INSERT INTO usuarios (identificador, password_hash, rol) VALUES (?, ?, ?)",
+            (identificador, hash_password(datos.password), datos.rol),
+        )
+    return {
+        "id": cur.lastrowid,
+        "identificador": identificador,
+        "rol": datos.rol,
+        "activo": 1,
+    }
+
+
+@app.patch("/admin/usuarios/{id}")
+def editar_usuario(
+    id: int,
+    datos: UsuarioEdicionIn,
+    db: Db,
+    _=Depends(requiere("administrador")),
+):
+    fila = db.execute(
+        "SELECT 1 FROM usuarios WHERE id = ? AND rol != 'cliente'", (id,)
+    ).fetchone()
+    if fila is None:
+        raise HTTPException(404, "No encontrado")
+
+    cambios = datos.model_dump(exclude_none=True)
+    if "identificador" in cambios:
+        cambios["identificador"] = cambios["identificador"].strip().lower()
+    if "password" in cambios:
+        cambios["password_hash"] = hash_password(cambios.pop("password"))
+    if "activo" in cambios:
+        cambios["activo"] = int(cambios["activo"])
+    if cambios:
+        asignaciones = ", ".join(f"{campo} = ?" for campo in cambios)
+        with db:
+            db.execute(
+                f"UPDATE usuarios SET {asignaciones} WHERE id = ?",
+                (*cambios.values(), id),
+            )
+    return dict(
+        db.execute(
+            "SELECT id, identificador, rol, activo FROM usuarios WHERE id = ?", (id,)
+        ).fetchone()
+    )

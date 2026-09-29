@@ -46,13 +46,17 @@ function crearCard(item, tipo) {
   const col = document.createElement('div');
   col.className = 'col';
   col.innerHTML = `
-    <div class="card h-100">
+    <div class="card h-100 position-relative">
+      <span class="badge text-bg-success position-absolute top-0 start-0 m-2 d-none oferta-badge">Oferta</span>
       <div class="product-media"></div>
       <div class="card-body d-flex flex-column">
         <h3 class="h6 card-title"></h3>
         <p class="small text-body-secondary flex-grow-1"></p>
-        <div class="d-flex justify-content-between align-items-center">
-          <span class="fw-semibold precio"></span>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div class="lh-sm precio-bloque">
+            <del class="d-none small text-body-secondary precio-antes"></del>
+            <span class="d-block fw-semibold precio"></span>
+          </div>
           <button class="btn btn-sm btn-success" type="button">Agregar</button>
         </div>
       </div>
@@ -74,9 +78,19 @@ function crearCard(item, tipo) {
     media.textContent = 'Imagen no disponible';
   }
   col.querySelector('p').textContent = item.descripcion;
-  col.querySelector('.precio').textContent = formatearPrecio(item.precio);
+  // precio_oferta solo llega para clientes registrados; si no viene, se muestra el precio normal
+  const oferta = item.precio_oferta != null;
+  const precioFinal = oferta ? item.precio_oferta : item.precio;
+  col.querySelector('.precio').textContent = formatearPrecio(precioFinal);
+  if (oferta) {
+    col.querySelector('.precio').classList.add('text-success');
+    col.querySelector('.oferta-badge').classList.remove('d-none');
+    const antes = col.querySelector('.precio-antes');
+    antes.textContent = formatearPrecio(item.precio);
+    antes.classList.replace('d-none', 'd-block');
+  }
   col.querySelector('button').addEventListener('click', () => {
-    agregarAlCarrito(tipo, item);
+    agregarAlCarrito(tipo, { ...item, precio: precioFinal });
     actualizarBadge();
   });
   return col;
