@@ -1,0 +1,150 @@
+scalar Dinero
+
+enum EstadoPedido { pendiente pagado preparando enviado entregado cancelado expirado }
+enum EstadoPago { pendiente aprobado rechazado }
+enum EstadoReembolso { pendiente completado fallido }
+enum TipoItem { producto combo }
+enum Rol { cliente administrador cajero despacho dueno }
+enum EstadoEnvioComprobante { pendiente simulado fallido }
+
+input FiltrosProductos {
+  productoId: ID
+  categoriaId: ID
+  busqueda: String
+  soloDisponibles: Boolean = false
+  incluirInactivos: Boolean = false
+}
+input FiltrosCombos { comboId: ID busqueda: String soloDisponibles: Boolean = false }
+input FiltrosCatalogo { productos: FiltrosProductos combos: FiltrosCombos }
+input FiltrosPedidos { estado: EstadoPedido desde: String hasta: String }
+
+type Query {
+  catalogo(filtros: FiltrosCatalogo, pagina: Int! = 1, limite: Int! = 12): Catalogo
+  perfil: PerfilUsuario
+  misPedidos(filtros: FiltrosPedidos, pagina: Int! = 1, limite: Int! = 20): PaginaPedidos
+  pedido(id: ID!): Pedido
+  pedidos(filtros: FiltrosPedidos, pagina: Int! = 1, limite: Int! = 20): PaginaPedidos
+  reporteVentas(desde: String!, hasta: String!, pagina: Int! = 1, limite: Int! = 20): ReporteVentas
+}
+
+type Paginacion { pagina: Int! limite: Int! total: Int! }
+type Categoria { id: ID! nombre: String! }
+type Catalogo { categorias: [Categoria!] productos: PaginaProductos combos: PaginaCombos }
+type PaginaProductos { items: [Producto!]! paginacion: Paginacion! }
+type PaginaCombos { items: [Combo!]! paginacion: Paginacion! }
+type Producto {
+  id: ID!
+  nombre: String!
+  descripcion: String
+  categoria: Categoria!
+  precio: Int!
+  precioOferta: Int
+  precioFinal: Int!
+  disponible: Boolean!
+  activo: Boolean!
+  stock: Int
+}
+type ComponenteCombo { id: ID! nombre: String! cantidad: Int! }
+type Combo {
+  id: ID!
+  nombre: String!
+  descripcion: String
+  precio: Int!
+  precioOferta: Int
+  precioFinal: Int!
+  disponible: Boolean!
+  productos: [ComponenteCombo!]!
+}
+type PerfilUsuario {
+  id: ID!
+  identificador: String!
+  rol: Rol!
+  clienteId: ID
+  correoVerificado: Boolean
+  datosCliente: DatosPerfil
+}
+type DatosPerfil {
+  nombres: String!
+  apellidos: String!
+  rut: String!
+  email: String!
+  telefono: String
+  direccion: String
+  comuna: String
+}
+type PaginaPedidos { items: [ResumenPedido!]! paginacion: Paginacion! }
+type ResumenPedido {
+  id: ID!
+  estado: EstadoPedido!
+  creadoEn: String!
+  pagadoEn: String
+  moneda: String!
+  total: Int
+  ventaId: ID
+  pago: ResumenPago
+}
+type Pedido {
+  id: ID!
+  estado: EstadoPedido!
+  version: Int!
+  creadoEn: String!
+  actualizadoEn: String!
+  pagadoEn: String
+  venceEn: String
+  moneda: String!
+  subtotal: Int
+  descuento: Int
+  costoEnvio: Int
+  total: Int
+  ventaId: ID
+  cliente: ClientePedido
+  direccion: DireccionPedido
+  lineas: [LineaPedido!]!
+  historial(pagina: Int! = 1, limite: Int! = 20): PaginaHistorial
+  pago: ResumenPago
+  reembolso: ResumenReembolso
+  comprobante: Comprobante
+}
+type ClientePedido { nombres: String! apellidos: String! telefono: String }
+type DireccionPedido { calle: String! numero: String! departamento: String comuna: String! }
+type LineaPedido {
+  id: ID!
+  tipo: TipoItem!
+  referenciaId: ID!
+  nombre: String!
+  cantidad: Int!
+  precioUnitario: Int
+  subtotal: Int
+  catalogoActual: ItemCatalogoActual
+}
+type ItemCatalogoActual { id: ID! nombre: String! precioFinal: Int! disponible: Boolean! }
+type PaginaHistorial { items: [EventoPedido!]! paginacion: Paginacion! }
+type EventoPedido { estado: EstadoPedido! fecha: String! }
+type ResumenPago { id: ID! estado: EstadoPago! monto: Int! moneda: String! }
+type ResumenReembolso {
+  id: ID!
+  estado: EstadoReembolso!
+  montoDevuelto: Int!
+  moneda: String!
+  reintentable: Boolean!
+}
+type Comprobante { id: ID! ventaId: ID! numero: String! estadoEnvio: EstadoEnvioComprobante! }
+type ReporteVentas {
+  desde: String!
+  hasta: String!
+  zonaHoraria: String!
+  moneda: String!
+  cantidadVentas: Int
+  ventas: PaginaVentas
+  totalCobrado: Dinero
+  totalDevuelto: Dinero
+  netoCobrado: Dinero
+}
+type PaginaVentas { items: [VentaReporte!]! paginacion: Paginacion! }
+type VentaReporte {
+  id: ID!
+  pedidoId: ID!
+  fecha: String!
+  estadoPedido: EstadoPedido!
+  total: Int!
+}
