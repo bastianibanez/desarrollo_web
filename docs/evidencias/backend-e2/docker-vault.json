@@ -1,0 +1,263 @@
+{
+  "executed_at_utc": "2026-10-28T16:54:58.104050+00:00",
+  "profile": "patron-profesor-auth-apollo",
+  "health_before": [
+    {
+      "service": "auth",
+      "health": "healthy"
+    },
+    {
+      "service": "clients",
+      "health": "healthy"
+    },
+    {
+      "service": "gateway",
+      "health": "healthy"
+    },
+    {
+      "service": "graphql",
+      "health": "healthy"
+    },
+    {
+      "service": "inventory",
+      "health": "healthy"
+    },
+    {
+      "service": "orders",
+      "health": "healthy"
+    },
+    {
+      "service": "payments",
+      "health": "healthy"
+    },
+    {
+      "service": "simulator",
+      "health": "healthy"
+    },
+    {
+      "service": "vault",
+      "health": "healthy"
+    }
+  ],
+  "smoke": {
+    "pedido_id": 4,
+    "estado": "entregado",
+    "pago": "aprobado",
+    "comprobante": {
+      "numero": "FE-00000004",
+      "estadoEnvio": "simulado"
+    },
+    "frontend": "no utilizado"
+  },
+  "vault_acl": {
+    "auth": {
+      "auth": 200,
+      "clients": 403,
+      "inventory": 403,
+      "orders": 403,
+      "payments": 403,
+      "graphql": 403,
+      "simulator": 403,
+      "gateway": 403
+    },
+    "clients": {
+      "auth": 403,
+      "clients": 200,
+      "inventory": 403,
+      "orders": 403,
+      "payments": 403,
+      "graphql": 403,
+      "simulator": 403,
+      "gateway": 403
+    },
+    "inventory": {
+      "auth": 403,
+      "clients": 403,
+      "inventory": 200,
+      "orders": 403,
+      "payments": 403,
+      "graphql": 403,
+      "simulator": 403,
+      "gateway": 403
+    },
+    "orders": {
+      "auth": 403,
+      "clients": 403,
+      "inventory": 403,
+      "orders": 200,
+      "payments": 403,
+      "graphql": 403,
+      "simulator": 403,
+      "gateway": 403
+    },
+    "payments": {
+      "auth": 403,
+      "clients": 403,
+      "inventory": 403,
+      "orders": 403,
+      "payments": 200,
+      "graphql": 403,
+      "simulator": 403,
+      "gateway": 403
+    },
+    "graphql": {
+      "auth": 403,
+      "clients": 403,
+      "inventory": 403,
+      "orders": 403,
+      "payments": 403,
+      "graphql": 200,
+      "simulator": 403,
+      "gateway": 403
+    },
+    "simulator": {
+      "auth": 403,
+      "clients": 403,
+      "inventory": 403,
+      "orders": 403,
+      "payments": 403,
+      "graphql": 403,
+      "simulator": 200,
+      "gateway": 403
+    },
+    "gateway": {
+      "auth": 403,
+      "clients": 403,
+      "inventory": 403,
+      "orders": 403,
+      "payments": 403,
+      "graphql": 403,
+      "simulator": 403,
+      "gateway": 200
+    }
+  },
+  "private_without_identity": {
+    "auth": 403,
+    "clients": 403,
+    "inventory": 403,
+    "orders": 403,
+    "payments": 403,
+    "graphql": 403,
+    "simulator": 403
+  },
+  "login_contract": {
+    "token_type": "bearer",
+    "expires_in": 28800
+  },
+  "session_without_bearer_status": "UNAUTHENTICATED",
+  "health_after_restart": [
+    {
+      "service": "auth",
+      "health": "healthy"
+    },
+    {
+      "service": "clients",
+      "health": "healthy"
+    },
+    {
+      "service": "gateway",
+      "health": "healthy"
+    },
+    {
+      "service": "graphql",
+      "health": "healthy"
+    },
+    {
+      "service": "inventory",
+      "health": "healthy"
+    },
+    {
+      "service": "orders",
+      "health": "healthy"
+    },
+    {
+      "service": "payments",
+      "health": "healthy"
+    },
+    {
+      "service": "simulator",
+      "health": "healthy"
+    },
+    {
+      "service": "vault",
+      "health": "healthy"
+    }
+  ],
+  "persisted_after_restart": {
+    "id": "4",
+    "estado": "entregado",
+    "total": 3190,
+    "comprobante": {
+      "numero": "FE-00000004"
+    }
+  },
+  "auth_session_persisted_after_restart": true,
+  "logout_revokes_bearer_status": 401,
+  "isolation": [
+    {
+      "service": "auth",
+      "published_ports": {},
+      "identity_read_only": true,
+      "root_token_in_env": false
+    },
+    {
+      "service": "clients",
+      "published_ports": {},
+      "identity_read_only": true,
+      "root_token_in_env": false
+    },
+    {
+      "service": "gateway",
+      "published_ports": {
+        "8000/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "8000"
+          }
+        ]
+      },
+      "identity_read_only": true,
+      "root_token_in_env": false
+    },
+    {
+      "service": "graphql",
+      "published_ports": {},
+      "identity_read_only": true,
+      "root_token_in_env": false
+    },
+    {
+      "service": "inventory",
+      "published_ports": {},
+      "identity_read_only": true,
+      "root_token_in_env": false
+    },
+    {
+      "service": "orders",
+      "published_ports": {},
+      "identity_read_only": true,
+      "root_token_in_env": false
+    },
+    {
+      "service": "payments",
+      "published_ports": {},
+      "identity_read_only": true,
+      "root_token_in_env": false
+    },
+    {
+      "service": "simulator",
+      "published_ports": {},
+      "identity_read_only": true,
+      "root_token_in_env": false
+    },
+    {
+      "service": "vault",
+      "published_ports": {}
+    }
+  ],
+  "backend_network_internal": true,
+  "dockerfile_build_verified": true,
+  "vault_real_verified": true,
+  "docker_runtime_verified": true,
+  "application_image_id": "sha256:d06f74c56680545ac028b5e1dd5fe8835b08fb64217339ee126b38203aff2ec5",
+  "graphql_image_id": "sha256:f8a3e3a4cc82ef3042fd70b76dd15a0dd75398677cb40fab7a25141952212a2c"
+}

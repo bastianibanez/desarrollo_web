@@ -1,0 +1,259 @@
+classDiagram
+direction LR
+%% Modelo lógico de dominio, 24 oct. 2026. No es DDL ni UML de servicios.
+%% ID_REF señala datos de otro servicio: relación de negocio, sin FK distribuida.
+%% Los mínimos de Pedido se exigen al completar checkout; ver modelo-datos.md.
+
+namespace clients {
+  class Cliente {
+    +ID id
+    +string nombres
+    +string apellidos
+    +string rut
+    +string email
+    +ID_REF comuna_id
+    +boolean activo
+    +datetime email_verificado_en
+    -string codigo_hash
+  }
+  class Usuario {
+    +ID id
+    +ID cliente_id
+    +string identificador
+    +Rol rol
+    +boolean activo
+    -string password_hash
+  }
+  class Sesion {
+    -string token_hash
+    +ID usuario_id
+    +datetime creado_en
+    +datetime expira_en
+    +datetime revocada_en
+  }
+}
+
+namespace inventory {
+  class Categoria {
+    +ID id
+    +string nombre
+  }
+  class Producto {
+    +ID id
+    +ID categoria_id
+    +string nombre
+    +int precio
+    +int precio_oferta
+    +int stock
+    +boolean activo
+  }
+  class Combo {
+    +ID id
+    +string nombre
+    +int precio
+    +int precio_oferta
+  }
+  class LineaCombo {
+    +ID id
+    +ID combo_id
+    +ID producto_id
+    +int cantidad
+  }
+  class ReservaStock {
+    +ID id
+    +string operacion_checkout
+    +ID_REF pedido_id
+    +EstadoReserva estado
+    +datetime vence_en
+    +int version
+  }
+  class LineaReserva {
+    +ID id
+    +ID reserva_id
+    +ID producto_id
+    +ID combo_id
+    +string nombre
+    +int cantidad
+    +int precio_unitario
+  }
+  class DetalleReserva {
+    +ID id
+    +ID reserva_id
+    +ID producto_id
+    +int cantidad
+  }
+}
+
+namespace orders {
+  class Comuna {
+    +ID id
+    +string nombre
+    +string ciudad
+    +string region
+    +boolean habilitada
+  }
+  class TarifaEnvio {
+    +ID id
+    +ID comuna_id
+    +int costo
+  }
+  class Caja {
+    +ID id
+    +string nombre
+    +ID_REF cajero_id
+  }
+  class Pedido {
+    +ID id
+    +ID_REF cliente_id
+    +ID_REF reserva_id
+    +ID caja_id
+    +ID_REF cajero_id
+    +ID_REF pago_confirmado_id
+    +EstadoPedido estado
+    +int version
+    +int subtotal
+    +int costo_envio
+    +int total
+    +string cliente_nombre_snapshot
+    +string direccion_snapshot
+    +datetime pago_confirmado_en
+    +string causa_cancelacion
+  }
+  class LineaPedido {
+    +ID id
+    +ID orden_id
+    +ID_REF producto_id
+    +ID_REF combo_id
+    +string nombre
+    +int cantidad
+    +int precio_unitario
+  }
+  class EventoPedido {
+    +ID id
+    +ID orden_id
+    +string tipo
+    +EstadoPedido estado_resultante
+    +string actor_ref
+    +string referencia_origen
+    +datetime ocurrido_en
+  }
+  class Venta {
+    +ID id
+    +ID orden_id
+    +ID_REF pago_id
+    +ID caja_id
+    +ID_REF cajero_id
+    +string cajero_identificador
+    +int total
+    +datetime registrada_en
+  }
+  class Comprobante {
+    +ID id
+    +ID venta_id
+    +string numero
+    +string contenido_snapshot
+    +string estado_envio
+    +string mensaje_id
+    +datetime emitido_en
+  }
+}
+
+namespace payments {
+  class IntentoPago {
+    +ID id
+    +ID_REF pedido_id
+    +ID_REF cliente_id
+    +string proveedor
+    +string transaccion_proveedor
+    +EstadoPago estado
+    +int monto
+    +string moneda
+    +datetime aprobado_en
+    +datetime verificado_en
+  }
+  class EventoProveedor {
+    +ID id
+    +string proveedor
+    +string evento_proveedor
+    +ID pago_id
+    +ID intento_reembolso_id
+    +datetime recibido_en
+    +datetime procesado_en
+  }
+  class SolicitudReembolso {
+    +ID id
+    +ID_REF pedido_id
+    +ID pago_id
+    +ID_REF cliente_id
+    +string motivo
+    +EstadoSolicitud estado
+    +string decision_id
+    +ID_REF administrador_id
+    +datetime decidida_en
+  }
+  class Reembolso {
+    +ID id
+    +ID pago_id
+    +ID solicitud_id
+    +string causa
+    +string referencia_autorizacion
+    +EstadoReembolso estado
+    +int monto_solicitado
+    +int monto_devuelto
+    +datetime completado_en
+  }
+  class IntentoReembolso {
+    +ID id
+    +ID reembolso_id
+    +int numero_intento
+    +string clave_proveedor
+    +string referencia_proveedor
+    +EstadoReembolso estado
+    +ID_REF iniciado_por
+    +datetime verificado_en
+  }
+}
+
+Cliente "0..1" -- "0..1" Usuario : perfil de cuenta
+Usuario "1" -- "0..*" Sesion : acceso
+Categoria "1" -- "0..*" Producto : clasifica
+Combo "1" *-- "1..*" LineaCombo : componentes
+Producto "1" -- "0..*" LineaCombo : usado en
+ReservaStock "1" *-- "1..*" LineaReserva : cotizacion historica
+ReservaStock "1" *-- "1..*" DetalleReserva : unidades comprometidas
+Producto "1" -- "0..*" DetalleReserva : unidades del producto
+Producto "0..1" -- "0..*" LineaReserva : XOR Combo
+Combo "0..1" -- "0..*" LineaReserva : XOR Producto
+Comuna "1" -- "0..1" TarifaEnvio : tarifa vigente
+Comuna "1" -- "0..*" Pedido : referencia y snapshot
+Comuna "0..1" -- "0..*" Cliente : REF perfil actual
+Caja "1" -- "0..*" Pedido : caja aceptada
+Usuario "0..1" -- "0..1" Caja : REF asignacion actual
+Usuario "1" -- "0..*" Pedido : REF cajero historico
+Usuario "1" -- "0..*" Venta : REF cajero historico
+Cliente "1" -- "0..*" Pedido : REF propietario
+Pedido "0..1" -- "1" ReservaStock : REF checkout completado
+Pedido "1" *-- "1..*" LineaPedido : compra historica
+Producto "0..1" -- "0..*" LineaPedido : REF XOR Combo
+Combo "0..1" -- "0..*" LineaPedido : REF XOR Producto
+Pedido "1" *-- "1..*" EventoPedido : historial
+Pedido "1" -- "0..1" Venta : registro comercial
+Caja "1" -- "0..*" Venta : caja historica
+Venta "1" -- "0..1" Comprobante : documento unico
+Pedido "1" -- "0..*" IntentoPago : REF cobros
+IntentoPago "1" -- "0..1" Venta : REF cobro aceptado
+IntentoPago "0..1" -- "0..1" Pedido : REF pago_confirmado_id
+IntentoPago "0..1" -- "0..*" EventoProveedor : resultado recibido
+IntentoPago "1" -- "0..*" SolicitudReembolso : cobro reclamado
+Pedido "1" -- "0..*" SolicitudReembolso : REF historial excepcional
+SolicitudReembolso "0..1" -- "0..1" Reembolso : autorizacion excepcional
+IntentoPago "1" -- "0..1" Reembolso : devolucion del cobro
+Reembolso "1" *-- "0..*" IntentoReembolso : historial de intentos
+IntentoReembolso "0..1" -- "0..*" EventoProveedor : resultado recibido
+
+note for Usuario "Un rol por cuenta. Rol cliente exige Cliente. Funcionarios sin perfil comercial."
+note for LineaReserva "Producto XOR combo. Nombre y precio aceptados, no valores actuales."
+note for LineaPedido "Producto XOR combo. IDs externos sin FK; snapshot inmutable."
+note for ReservaStock "15 min. Stock fisico se descuenta al consumir; liberar no suma stock."
+note for Reembolso "Un proceso por cobro; un fallo conserva proceso y autorizacion."
+note for Pedido "Atributos snapshot agrupados solo para legibilidad; detalle de columnas en modelo-datos.md."
