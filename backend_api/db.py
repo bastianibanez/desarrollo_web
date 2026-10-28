@@ -398,6 +398,21 @@ COMBOS = [
     ),
 ]
 
+# Precios de oferta para la demo: solo los ven clientes registrados, administrador y dueño.
+# Cada oferta debe ser menor que el precio normal (lo exige el CHECK del esquema).
+OFERTAS_PRODUCTOS = {
+    "Bowl Quinoa": 5490,
+    "Bowl Vegano": 5490,
+    "Bowl Salmón": 6990,
+    "Jugo Natural Naranja": 1990,
+    "Mix Frutos Secos": 1590,
+    "Barra de Granola": 990,
+}
+OFERTAS_COMBOS = {
+    "Combo Power": 8490,
+    "Combo Fit": 8990,
+}
+
 
 def ruta_db() -> Path:
     return Path(os.environ.get("TIENDA_DB", BASE_DIR / "tienda.db"))
@@ -446,6 +461,10 @@ def sembrar(conn: sqlite3.Connection) -> None:
                     "INSERT INTO productos (nombre, descripcion, precio, stock, categoria_id) VALUES (?, ?, ?, ?, ?)",
                     (nombre, descripcion, precio, stock, cat_id),
                 )
+            conn.executemany(
+                "UPDATE productos SET precio_oferta = ? WHERE nombre = ?",
+                [(oferta, nombre) for nombre, oferta in OFERTAS_PRODUCTOS.items()],
+            )
 
         if conn.execute("SELECT COUNT(*) FROM combos").fetchone()[0] == 0:
             for nombre, descripcion, precio, lineas in COMBOS:
@@ -462,6 +481,10 @@ def sembrar(conn: sqlite3.Connection) -> None:
                         "INSERT INTO lineas_combo (combo_id, producto_id, cantidad) VALUES (?, ?, ?)",
                         (combo_id, prod_id, cantidad),
                     )
+            conn.executemany(
+                "UPDATE combos SET precio_oferta = ? WHERE nombre = ?",
+                [(oferta, nombre) for nombre, oferta in OFERTAS_COMBOS.items()],
+            )
 
         conn.execute("INSERT OR IGNORE INTO cajas (nombre) VALUES ('Web')")
 

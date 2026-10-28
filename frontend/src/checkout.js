@@ -1,9 +1,9 @@
-import { getComunas, crearOrden } from './api.js';
+import { getComunas, crearOrden, yo } from './api.js';
 import { formatearPrecio } from './formato.js';
-import { validarRut } from './rut.js';
 import { leerCarrito, cambiarCantidad, quitarDelCarrito, vaciarCarrito } from './carrito.js';
 import { actualizarBadge } from './nav.js';
 import { imagenDeItem } from './imagenes.js';
+import { irAAcceso } from './sesion.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -11,13 +11,29 @@ const comunas = await getComunas();
 for (const c of comunas) {
   $('comuna').add(new Option(`${c.nombre}`, c.id));
 }
+
+// El comprador es el cliente de la sesión: sus datos vienen de GET /yo, no del formulario
+let puedeComprar = false;
+try {
+  const usuario = await yo();
+  if (usuario.perfil) {
+    const p = usuario.perfil;
+    $('comprador-nombre').textContent = `${p.nombres} ${p.apellidos}`;
+    $('comprador-rut').textContent = p.rut;
+    $('comprador-email').textContent = p.email;
+    $('comprador-telefono').textContent = p.telefono;
+    puedeComprar = true;
+  } else {
+    alerta('danger', 'Ingresa con una cuenta de cliente para crear un pedido.');
+  }
+} catch (err) {
+  if (err.status === 401) irAAcceso();
+  else alerta('danger', err.message);
+}
 render();
 
 $('comuna').addEventListener('change', render);
 $('carrito-lista').addEventListener('click', onClickLista);
-$('rut').addEventListener('input', (e) => {
-  e.target.setCustomValidity(validarRut(e.target.value) ? '' : 'RUT inválido');
-});
 $('checkout-form').addEventListener('submit', onSubmit);
 
 function render() {
@@ -31,7 +47,7 @@ function render() {
   $('despacho').textContent = formatearPrecio(envio);
   $('total').textContent = formatearPrecio(subtotal + envio);
 
-  $('btn-pagar').disabled = items.length === 0;
+  $('btn-pagar').disabled = items.length === 0 || !puedeComprar;
   actualizarBadge();
 }
 
@@ -95,13 +111,6 @@ async function onSubmit(e) {
   const f = Object.fromEntries(new FormData(e.target));
 
   const orden = {
-    cliente: {
-      nombres: f.nombres,
-      apellidos: f.apellidos,
-      rut: f.rut,
-      email: f.email,
-      telefono: f.telefono || null,
-    },
     direccion: {
       calle: f.calle,
       numero: f.numero,
@@ -119,7 +128,7 @@ async function onSubmit(e) {
     vaciarCarrito();
     e.target.reset();
     render();
-    alerta('success', `Orden #${res.id} creada. Total: ${formatearPrecio(res.total)}`);
+    alerta('success', `Pedido #${res.id} pendiente. Total: ${formatearPrecio(res.total)}`);
   } catch (err) {
     alerta('danger', err.message);
   }

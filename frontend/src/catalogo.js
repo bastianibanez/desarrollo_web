@@ -89,9 +89,16 @@ function crearCard(item, tipo) {
     antes.textContent = formatearPrecio(item.precio);
     antes.classList.replace('d-none', 'd-block');
   }
-  col.querySelector('button').addEventListener('click', () => {
-    agregarAlCarrito(tipo, { ...item, precio: precioFinal });
-    actualizarBadge();
-  });
+  const disponible = tipo === 'combo' ? item.disponible : item.stock > 0;
+  const boton = col.querySelector('button');
+  if (!disponible) {
+    boton.disabled = true;
+    boton.textContent = 'Agotado';
+  } else {
+    boton.addEventListener('click', () => {
+      agregarAlCarrito(tipo, { ...item, precio: precioFinal });
+      actualizarBadge();
+    });
+  }
   return col;
 }
