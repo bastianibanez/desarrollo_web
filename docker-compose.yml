@@ -1,64 +1,157 @@
+name: fitexpress-e2
+
+x-app: &app
+  image: fitexpress-backend:e2
+  build:
+    context: .
+    dockerfile: services/Dockerfile
+  environment:
+    VAULT_ADDR: http://vault:8200
+    VAULT_TOKEN_FILE: /run/identity/token
+    DATA_DIR: /data
+  networks: [backend]
+  depends_on:
+    vault-init:
+      condition: service_completed_successfully
+  restart: unless-stopped
+  healthcheck:
+    test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/health', timeout=2)"]
+    interval: 5s
+    timeout: 3s
+    retries: 12
+    start_period: 5s
+  command: [uvicorn, services.clients.backend_api:app, --host, 0.0.0.0, --port, '9000', --no-access-log]
+
 services:
   vault:
-    image: hashicorp/vault
-    ports:
-      - "8200:8200"
+    image: hashicorp/vault:1.21
     environment:
-      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_TOKEN}
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_TOKEN:?Define VAULT_TOKEN antes de iniciar}
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    cap_add: [IPC_LOCK]
+    networks: [backend]
     healthcheck:
-      test: ["CMD", "vault", "status", "-address=http://127.0.0.1:8200"]
+      test: [CMD, vault, status, -address=http://127.0.0.1:8200]
       interval: 2s
-      retries: 15
+      timeout: 3s
+      retries: 20
 
-  # Carga los secretos en Vault una vez y termina
   vault-init:
-    image: hashicorp/vault
+    image: fitexpress-backend:e2
+    build:
+      context: .
+      dockerfile: services/Dockerfile
     depends_on:
       vault:
         condition: service_healthy
     environment:
-      VAULT_ADDR: ${VAULT_ADDR}
-      VAULT_TOKEN: ${VAULT_TOKEN}
-    command: >
-      vault kv put secret/gateway
-      client_token=${CLIENT_TOKEN}
-      backend_shared_secret=${BACKEND_SHARED_SECRET}
-
-  backend_api:
-    build: ./backend_api
-    # Sin "ports": solo el gateway (misma red de Compose) puede llegar al backend
-    environment:
-      INTERNAL_GATEWAY_SECRET: ${BACKEND_SHARED_SECRET}
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: ${VAULT_TOKEN:?Define VAULT_TOKEN antes de iniciar}
+    networks: [backend]
+    command: [python, -m, services.bootstrap]
     volumes:
-      - ./backend_api:/app
-    command: uvicorn backend_api:app --host 0.0.0.0 --port 9000 --reload
+      - identity-auth:/identities/auth
+      - identity-clients:/identities/clients
+      - identity-inventory:/identities/inventory
+      - identity-orders:/identities/orders
+      - identity-payments:/identities/payments
+      - identity-graphql:/identities/graphql
+      - identity-gateway:/identities/gateway
+      - identity-simulator:/identities/simulator
 
-  api_gateway:
-    build: ./api_gateway
-    ports:
-      - "8000:8000"
-    environment:
-      VAULT_ADDR: ${VAULT_ADDR}
-      VAULT_TOKEN: ${VAULT_TOKEN}
-      BACKEND_URL: ${BACKEND_URL}
+  auth:
+    <<: *app
+    command: [uvicorn, services.auth.auth_service:app, --host, 0.0.0.0, --port, '8100', --no-access-log]
     volumes:
-      - ./api_gateway:/app
-    command: uvicorn gateway:app --host 0.0.0.0 --port 8000 --reload
-    depends_on:
-      vault-init:
-        condition: service_completed_successfully
-      backend_api:
-        condition: service_started
+      - data-auth:/data
+      - identity-auth:/run/identity:ro
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8100/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
 
-  frontend:
-    environment:
-      VITE_API_URL: ${VITE_API_URL}
-      VITE_CLIENT_TOKEN: ${CLIENT_TOKEN}
-    image: node:24-alpine
-    working_dir: /app
-    ports:
-      - "5173:5173"
+  clients:
+    <<: *app
     volumes:
-      - ./frontend:/app
-      - /app/node_modules # node_modules del contenedor (Linux), no el del host
-    command: sh -c "npm install && npx vite --host 0.0.0.0"
+      - data-clients:/data
+      - identity-clients:/run/identity:ro
+
+  inventory:
+    <<: *app
+    command: [uvicorn, services.inventory.backend_api:app, --host, 0.0.0.0, --port, '9000', --no-access-log]
+    volumes:
+      - data-inventory:/data
+      - identity-inventory:/run/identity:ro
+
+  orders:
+    <<: *app
+    command: [uvicorn, services.orders.backend_api:app, --host, 0.0.0.0, --port, '9000', --no-access-log]
+    volumes:
+      - data-orders:/data
+      - identity-orders:/run/identity:ro
+
+  payments:
+    <<: *app
+    command: [uvicorn, services.payments.backend_api:app, --host, 0.0.0.0, --port, '9000', --no-access-log]
+    volumes:
+      - data-payments:/data
+      - identity-payments:/run/identity:ro
+
+  graphql:
+    <<: *app
+    image: fitexpress-graphql:e2
+    build:
+      context: ./services/graphql
+      dockerfile: Dockerfile
+    command: [node, server.js]
+    volumes:
+      - identity-graphql:/run/identity:ro
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:9000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  simulator:
+    <<: *app
+    command: [uvicorn, services.simulator.backend_api:app, --host, 0.0.0.0, --port, '9000', --no-access-log]
+    volumes:
+      - data-simulator:/data
+      - identity-simulator:/run/identity:ro
+
+  gateway:
+    <<: *app
+    command: [uvicorn, services.gateway.gateway:app, --host, 0.0.0.0, --port, '8000', --no-access-log]
+    ports: ['127.0.0.1:${FITEXPRESS_PORT:-8000}:8000']
+    networks: [backend, public]
+    volumes:
+      - data-gateway:/data
+      - identity-gateway:/run/identity:ro
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+networks:
+  backend:
+    internal: true
+  public: {}
+
+volumes:
+  data-auth: {}
+  data-clients: {}
+  data-inventory: {}
+  data-orders: {}
+  data-payments: {}
+  data-gateway: {}
+  data-simulator: {}
+  identity-auth: {}
+  identity-clients: {}
+  identity-inventory: {}
+  identity-orders: {}
+  identity-payments: {}
+  identity-graphql: {}
+  identity-gateway: {}
+  identity-simulator: {}
