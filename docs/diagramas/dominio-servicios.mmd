@@ -1,0 +1,131 @@
+classDiagram
+direction LR
+class Usuario {
+  +int id
+  +int cliente_id
+  +string rol
+  -string password_hash
+}
+class Cliente {
+  +int id
+  +string nombres
+  +string email
+  +string rut
+}
+class Sesion {
+  -string token_hash
+  +int usuario_id
+  +string version_cuenta
+  +datetime expira_at
+}
+class Producto {
+  +int id
+  +int precio
+  +int stock
+  +bool activo
+}
+class Reserva {
+  +int id
+  +string estado
+  +datetime vence_en
+}
+class Pedido {
+  +int id
+  +int cliente_id
+  +string estado
+  +int total
+  +string direccion_snapshot
+}
+class LineaPedido {
+  +int cantidad
+  +string nombre
+  +int precio_unitario
+}
+class Pago {
+  +int id
+  +int orden_id
+  +string estado
+  +int monto
+}
+class Venta {
+  +int id
+  +int orden_id
+  +int pago_id
+}
+class Comprobante {
+  +string numero
+  +string estado_envio
+}
+class Reembolso {
+  +int pago_id
+  +int monto_devuelto
+  +string estado
+}
+class AuthService {
+  <<service>>
+  +S01_login()
+  +S02_logout()
+  +I01_introspect()
+}
+class ClientsService {
+  <<service>>
+  +S03_perfil()
+  +S04_registro()
+  +S05_verificarCorreo()
+  +S07_S09_clientes()
+  +S10_S12_usuarios()
+}
+class InventoryService {
+  <<service>>
+  +S13_categorias()
+  +S14_S16_catalogo()
+  +S17_S19_productos()
+}
+class OrdersService {
+  <<service>>
+  +S06_comunas()
+  +S20_S22_pedidos()
+  +S23_cancelar()
+  +S24_S27_despacho()
+  +S28_S29_cajas()
+  +S30_reporteVentas()
+  +S31_S33_comprobantes()
+}
+class PaymentsService {
+  <<service>>
+  +S34_S35_pagos()
+  +S36_avisoProveedor()
+  +S37_S40_solicitudes()
+  +S42_reintentarReembolso()
+}
+class GraphQLService {
+  <<service>>
+  +S41_consultar()
+}
+Cliente "0..1" -- "0..1" Usuario : perfil
+Usuario "1" -- "0..*" Sesion : auth / REF
+Cliente "1" -- "0..*" Pedido : propietario / REF
+Pedido "0..1" -- "1" Reserva : checkout completo / REF
+Pedido "1" *-- "1..*" LineaPedido : snapshot
+Producto "0..1" -- "0..*" LineaPedido : producto o combo / REF
+Pedido "1" -- "0..*" Pago : intentos / REF
+Pedido "1" -- "0..1" Venta : pago aceptado
+Pago "1" -- "0..1" Venta : REF
+Venta "1" -- "0..1" Comprobante : unico
+Pago "1" -- "0..1" Reembolso : saldo devuelto
+AuthService ..> Sesion
+AuthService ..> ClientsService
+ClientsService ..> Usuario
+ClientsService ..> Cliente
+InventoryService ..> Producto
+InventoryService ..> Reserva
+OrdersService ..> Pedido
+OrdersService ..> Venta
+OrdersService ..> Comprobante
+PaymentsService ..> Pago
+PaymentsService ..> Reembolso
+GraphQLService ..> ClientsService
+GraphQLService ..> InventoryService
+GraphQLService ..> OrdersService
+GraphQLService ..> PaymentsService
+note for Reserva "Vista resumida; componentes de combos, detalles de reservas, caja e historial: modelo-dominio.mmd y schema.sql."

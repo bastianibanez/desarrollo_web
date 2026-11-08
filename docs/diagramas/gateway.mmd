@@ -1,0 +1,78 @@
+classDiagram
+direction TB
+class ApiGateway {
+  <<service>>
+  +authenticate_client(credentials)
+  +proxy(request)
+  +create_app(ctx)
+}
+class RouteDefinition {
+  <<configuration>>
+  +string method
+  +string public_path
+  +string target
+  +tuple roles
+}
+class RateLimiter {
+  +int minute
+  +dict counts
+  +check(key, limit)
+  +failure(key)
+}
+class Context {
+  +string name
+  +dict keys
+  +load_keys()
+  +call(target, method, path)
+  +require_caller(request, callers)
+}
+class AuthService {
+  <<service>>
+  +login(username, password)
+  +introspect(token)
+  +logout(token)
+}
+class Vault {
+  <<secretProvider>>
+  +read(serviceIdentity)
+}
+class GraphQLGateway {
+  <<service>>
+  +startServer()
+}
+class Schema {
+  +Query catalogo
+  +Query perfil
+  +Query misPedidos
+  +Query pedido
+  +Query pedidos
+  +Query reporteVentas
+}
+class Resolver {
+  +require(roles)
+  +resolve(parent, arguments, context)
+}
+class GraphQLContext {
+  +User user
+  +AbortSignal deadline
+  +require(roles)
+  +call(service, method, path)
+}
+class LimitPlugin {
+  +int depthMax_6
+  +int costMax_2000
+  +int timeoutMs_10000
+}
+ApiGateway "1" *-- "36" RouteDefinition : 34 propias y 2 simulador
+ApiGateway "1" *-- "1" RateLimiter
+ApiGateway "1" --> "1" Context
+ApiGateway ..> AuthService : introspeccion privada
+Context ..> Vault : secreto propio al arrancar
+ApiGateway ..> GraphQLGateway : POST /api/graphql
+GraphQLGateway "1" *-- "1" Schema
+GraphQLGateway "1" *-- "1..*" Resolver
+GraphQLGateway "1" *-- "1" LimitPlugin
+Resolver ..> GraphQLContext : contexto por solicitud
+GraphQLContext ..> Context : APIs HTTP de negocio
+note for ApiGateway "Modelo conceptual: authenticate_client y proxy son funciones dentro de create_app, no clases Python. RouteDefinition representa las tuplas de ROUTES."
+note for GraphQLContext "No accede a SQLite. Plazo de 3 s por dependencia dentro de 10 s por consulta."
