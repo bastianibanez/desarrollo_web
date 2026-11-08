@@ -8,6 +8,7 @@ import logging
 import os
 import secrets
 import sqlite3
+import time
 import uuid
 from contextlib import asynccontextmanager, contextmanager
 from datetime import UTC, date, datetime, timedelta
@@ -20,6 +21,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 log = logging.getLogger("fitexpress")
+log.setLevel(logging.INFO)
+if not log.handlers:
+    log.addHandler(logging.StreamHandler())
 ROLES = {"cliente", "administrador", "cajero", "despacho", "dueno"}
 ORDER_STATES = {
     "pendiente",
@@ -386,6 +390,7 @@ def application(ctx, startup=None, worker=None, external=False):
 
     @app.middleware("http")
     async def protect(request, next_call):
+        started = time.monotonic()
         correlation = request.headers.get("x-request-id", "")
         request.state.request_id = (
             correlation
@@ -396,7 +401,10 @@ def application(ctx, startup=None, worker=None, external=False):
         )
         try:
             if request.url.path not in {"/health"}:
-                if int(request.headers.get("content-length", "0")) > 65536:
+                length = request.headers.get("content-length", "0")
+                if not length.isascii() or not length.isdecimal():
+                    fail(400, "Content-Length inválido")
+                if len(length) > 10 or int(length) > 65536:
                     fail(413, "Cuerpo demasiado grande")
                 if len(await request.body()) > 65536:
                     fail(413, "Cuerpo demasiado grande")
@@ -431,6 +439,17 @@ def application(ctx, startup=None, worker=None, external=False):
         response.headers["X-Request-ID"] = request.state.request_id
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Cache-Control"] = "no-store"
+        # Solo plantilla de ruta: las URLs pueden contener tokens del simulador.
+        route = request.scope.get("route")
+        log.info(
+            "%s request_id=%s method=%s route=%s status=%s duration_ms=%.2f",
+            ctx.name,
+            request.state.request_id,
+            request.method,
+            getattr(route, "path", "unmatched"),
+            response.status_code,
+            (time.monotonic() - started) * 1000,
+        )
         return response
 
     def error_response(request, status, detail, headers=None):
