@@ -62,7 +62,9 @@
         <li><a href="index.html#bowls" class="nav-link px-2">Bowls</a></li>
         <li><a href="index.html#bebestibles" class="nav-link px-2">Bebestibles</a></li>
         <li><a href="index.html#snacks" class="nav-link px-2">Snacks</a></li>
+        <li><a href="acceso.html" class="nav-link px-2">Acceso</a></li>
         <li><a href="panel.html" class="nav-link px-2" aria-current="page">Panel</a></li>
+        <li><a href="cuenta.html" class="nav-link px-2">Mi cuenta</a></li>
       </ul>
     </header>
 
@@ -356,14 +358,13 @@
           role="tabpanel" aria-labelledby="tab-asignar-caja" tabindex="0">
           <div class="border rounded-3 p-3 p-md-4 mb-4">
             <h2 class="h6 text-body-secondary mb-3">Cajero de la caja Web</h2>
-            <p class="mb-3">Cajero asignado: <span id="caja-actual" class="fw-semibold">caja@fitexpress.cl</span></p>
+            <p class="mb-3">Cajero asignado: <span id="caja-actual" class="fw-semibold">Cargando…</span></p>
             <form id="caja-form">
               <div class="row g-3 align-items-end">
                 <div class="col-md-6">
                   <label for="caja-cajero" class="form-label">Funcionario con rol cajero</label>
                   <select class="form-select" id="caja-cajero" name="cajero_id" required>
                     <option value="" selected disabled>Elige un cajero</option>
-                    <option value="2">caja@fitexpress.cl</option>
                   </select>
                 </div>
                 <div class="col-md-6">
@@ -426,19 +427,15 @@
                   <tr>
                     <th>N° venta</th>
                     <th>Fecha</th>
-                    <th>Cliente</th>
+                    <th>Pedido</th>
                     <th class="text-end">Total</th>
                   </tr>
                 </thead>
-                <tbody id="reporte-ventas">
-                  <tr><td>1</td><td>28-09-2026 13:41</td><td>Ana Soto</td><td class="text-end">$9.990</td></tr>
-                  <tr><td>2</td><td>29-09-2026 10:50</td><td>Luisa Vera</td><td class="text-end">$11.480</td></tr>
-                  <tr><td>3</td><td>29-09-2026 11:20</td><td>Pedro Rojas</td><td class="text-end">$8.490</td></tr>
-                </tbody>
+                <tbody id="reporte-ventas"><tr><td colspan="4">Selecciona un período.</td></tr></tbody>
                 <tfoot>
                   <tr class="fw-semibold">
-                    <td colspan="3">Total del período</td>
-                    <td id="reporte-total" class="text-end">$29.960</td>
+                    <td colspan="3">Neto cobrado del período</td>
+                    <td id="reporte-total" class="text-end">—</td>
                   </tr>
                 </tfoot>
               </table>
@@ -451,37 +448,20 @@
           role="tabpanel" aria-labelledby="tab-caja" tabindex="0">
           <div class="border rounded-3 p-3 p-md-4 mb-4">
             <h2 class="h6 text-body-secondary mb-3">Pedidos pendientes de pago</h2>
+            <button id="actualizar-pagos" type="button" class="btn btn-outline-secondary mb-3">Actualizar</button>
             <div class="table-responsive">
               <table class="table table-sm align-middle mb-0">
                 <thead>
                   <tr>
                     <th>N°</th>
-                    <th>Cliente</th>
+                    <th>Estado</th>
                     <th>Fecha</th>
                     <th class="text-end">Total</th>
                     <th>Último resultado</th>
                     <th></th>
                   </tr>
                 </thead>
-                <tbody id="caja-pendientes">
-                  <tr>
-                    <td>12</td><td>Ana Soto</td><td>29-09-2026 10:15</td>
-                    <td class="text-end">$10.990</td><td>—</td>
-                    <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-success" data-pago="aprobado">Aprobar pago simulado</button>
-                      <button type="button" class="btn btn-sm btn-outline-danger" data-pago="rechazado">Rechazar</button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>13</td><td>Pedro Rojas</td><td>29-09-2026 10:32</td>
-                    <td class="text-end">$8.490</td>
-                    <td><span class="badge text-bg-warning">rechazado</span></td>
-                    <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-success" data-pago="aprobado">Aprobar pago simulado</button>
-                      <button type="button" class="btn btn-sm btn-outline-danger" data-pago="rechazado">Rechazar</button>
-                    </td>
-                  </tr>
-                </tbody>
+                <tbody id="caja-pendientes"><tr><td colspan="6">Cargando…</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -506,33 +486,19 @@
         <div class="tab-pane fade" id="pane-despacho" data-roles="despacho"
           role="tabpanel" aria-labelledby="tab-despacho" tabindex="0">
           <div class="border rounded-3 p-3 p-md-4 mb-4">
-            <h2 class="h6 text-body-secondary mb-3">Pedidos pagados, en orden de llegada</h2>
+            <h2 class="h6 text-body-secondary mb-3">Pedidos por despachar, en orden de llegada</h2>
+            <button id="actualizar-despachos" type="button" class="btn btn-outline-secondary mb-3">Actualizar</button>
             <div class="table-responsive">
               <table class="table table-sm align-middle mb-0">
                 <thead>
                   <tr>
                     <th>N°</th>
                     <th>Pagado</th>
-                    <th>Cliente</th>
-                    <th class="text-end">Total</th>
-                    <th>Impresa</th>
+                    <th>Estado</th>
                     <th></th>
                   </tr>
                 </thead>
-                <tbody id="despacho-cola">
-                  <tr>
-                    <td>11</td><td>28-09-2026 13:41</td><td>Ana Soto</td>
-                    <td class="text-end">$9.990</td>
-                    <td><span class="badge text-bg-success">Sí</span></td>
-                    <td class="text-end"><button type="button" class="btn btn-sm btn-outline-success">Ver</button></td>
-                  </tr>
-                  <tr>
-                    <td>14</td><td>29-09-2026 10:50</td><td>Luisa Vera</td>
-                    <td class="text-end">$11.480</td>
-                    <td><span class="badge text-bg-secondary">No</span></td>
-                    <td class="text-end"><button type="button" class="btn btn-sm btn-outline-success">Ver</button></td>
-                  </tr>
-                </tbody>
+                <tbody id="despacho-cola"><tr><td colspan="4">Cargando…</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -542,10 +508,10 @@
 
             <!-- Solo este bloque se imprime -->
             <div id="orden-impresa">
-              <h3 class="h5">FitExpress · Orden #<span id="oi-numero">14</span></h3>
-              <p class="mb-1">Pagado: <span id="oi-pagado">29-09-2026 10:50</span></p>
-              <p class="mb-1">Cliente: <span id="oi-cliente">Luisa Vera Mora</span></p>
-              <p class="mb-3">Dirección: <span id="oi-direccion">Los Leones 456, Providencia</span></p>
+              <h3 class="h5">FitExpress · Orden #<span id="oi-numero">—</span></h3>
+              <p class="mb-1">Pagado: <span id="oi-pagado">—</span></p>
+              <p class="mb-1">Cliente: <span id="oi-cliente">—</span></p>
+              <p class="mb-3">Dirección: <span id="oi-direccion">—</span></p>
               <table class="table table-sm mb-0">
                 <thead>
                   <tr>
@@ -553,16 +519,13 @@
                     <th class="text-end">Cantidad</th>
                   </tr>
                 </thead>
-                <tbody id="oi-items">
-                  <tr><td>Bowl Quinoa</td><td class="text-end">2</td></tr>
-                  <tr><td>Jugo Verde</td><td class="text-end">1</td></tr>
-                </tbody>
+                <tbody id="oi-items"><tr><td colspan="2">Selecciona un pedido.</td></tr></tbody>
               </table>
             </div>
 
             <div class="d-flex flex-wrap gap-2 mt-3">
-              <button id="btn-imprimir" type="button" class="btn btn-success">Imprimir</button>
-              <button id="btn-preparando" type="button" class="btn btn-outline-success">Preparando</button>
+              <button id="btn-imprimir" type="button" disabled class="btn btn-success">Imprimir</button>
+              <button id="btn-preparando" type="button" disabled class="btn btn-outline-success">Preparando</button>
             </div>
           </div>
         </div>

@@ -1,6 +1,8 @@
-export const leerCarrito = () => JSON.parse(localStorage.getItem('carrito')) ?? [];
+const KEY = 'fitexpress-demo-carrito';
+const inicial = [{ tipo: 'producto', id: 1, nombre: 'Bowl Quinoa', descripcion: 'Quinoa, palta, garbanzos y salsa de yogurt', precio: 5490, cantidad: 1 }];
+export const leerCarrito = () => JSON.parse(localStorage.getItem(KEY)) ?? structuredClone(inicial);
 
-const guardar = (items) => localStorage.setItem('carrito', JSON.stringify(items));
+const guardar = (items) => localStorage.setItem(KEY, JSON.stringify(items));
 const buscar = (items, tipo, id) => items.find((i) => i.tipo === tipo && i.id === id);
 
 export function agregarAlCarrito(tipo, { id, nombre, descripcion, precio }) {
@@ -21,4 +23,4 @@ export function quitarDelCarrito(tipo, id) {
   guardar(leerCarrito().filter((i) => !(i.tipo === tipo && i.id === id)));
 }
 
-export const vaciarCarrito = () => localStorage.removeItem('carrito');
+export const vaciarCarrito = () => guardar([]);
