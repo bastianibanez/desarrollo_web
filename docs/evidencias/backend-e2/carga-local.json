@@ -1,0 +1,29 @@
+{
+  "environment": {
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "python": "3.12.10"
+  },
+  "transport": "Gateway y APIs ASGI; Apollo Node real por HTTP y puente HTTP a APIs; sin Docker/Vault",
+  "dataset": {
+    "paid_orders": 5,
+    "catalog_page_size": 12
+  },
+  "requests": 60,
+  "concurrency": 4,
+  "catalog_requests": 40,
+  "report_requests": 20,
+  "duration_seconds": 0.404542375006713,
+  "p95_ms": 41.72737500630319,
+  "throughput_rps": 148.3157357718196,
+  "response_bytes_mean": 708.0,
+  "errors": [],
+  "python_cpu_seconds": 0.3800049999999997,
+  "python_peak_rss_bytes": 77021184,
+  "resource_scope": "Proceso Python: CPU de ventana y RSS máximo desde inicio; excluye Node. No equivale al consumo del despliegue.",
+  "targets": {
+    "p95_ms_max": 1000,
+    "throughput_rps_min": 5,
+    "errors_max": 0
+  },
+  "passed": true
+}

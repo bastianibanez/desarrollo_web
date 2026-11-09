@@ -1,0 +1,33 @@
+flowchart TB
+  navegador["Consumidor REST / GraphQL"] -->|"Bearer; localhost:8000"| gateway
+  subgraph public["Red public · solo puerto 8000 publicado"]
+    gateway["API Gateway · FastAPI"]
+  end
+  subgraph backend["Red backend · internal: true"]
+    auth["Auth · FastAPI · :8100"] -->|cuentas| clients
+    gateway -->|introspect| auth
+    gateway --> clients["clients · FastAPI · :9000"]
+    gateway --> inventory["inventory · FastAPI · :9000"]
+    gateway --> orders["orders · FastAPI · :9000"]
+    gateway --> payments["payments · FastAPI · :9000"]
+    gateway --> graphql["GraphQL · Express / Apollo · :9000"]
+    gateway --> simulator["Simulador de proveedor · :9000"]
+    graphql --> clients
+    graphql --> inventory
+    graphql --> orders
+    graphql --> payments
+    clients -->|comunas| orders
+    orders -->|perfil y cajero| clients
+    orders -->|reservas| inventory
+    orders <-->|resultados y devoluciones| payments
+    payments <-->|cobros, avisos y conciliacion| simulator
+    vault["Vault · :8200 · secretos por identidad"]
+    init["vault-init · proceso de provision"] --> vault
+    vault -.->|"lectura al arranque: 8 identidades"| gateway
+    auth --- da[(auth.sqlite)]
+    clients --- dc[(clients.sqlite)]
+    inventory --- di[(inventory.sqlite)]
+    orders --- do[(orders.sqlite)]
+    payments --- dp[(payments.sqlite)]
+    simulator --- ds[(simulator.sqlite)]
+  end

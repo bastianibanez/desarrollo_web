@@ -8,3 +8,9 @@ __pycache__
 assets/
 var/
 .ruff_cache/
+
+# Archivos locales de herramientas y vistas de planificación
+.claude/
+.playwright-mcp/
+docs/plan-evaluacion-2.html
+docs/plan-evualucion-2.html

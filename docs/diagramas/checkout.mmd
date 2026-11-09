@@ -1,0 +1,34 @@
+sequenceDiagram
+  actor C as Cliente
+  participant G as Gateway
+  participant A as Auth
+  participant O as Orders
+  participant I as Inventory
+  participant P as Payments
+  participant S as Simulador
+  C->>G: POST /api/ordenes + Bearer + Idempotency-Key
+  G->>A: POST /introspect + secreto tecnico
+  A-->>G: identidad vigente
+  G->>O: identidad verificada + clave de operacion
+  Note over O: Verifica cliente, caja, cajero y comuna por APIs privadas
+  O->>I: Reserva atomica de todos los items (15 minutos)
+  I-->>O: Precios oficiales y reserva
+  O-->>C: 201 pedido pendiente y total
+  C->>G: POST /api/pagos (orden_id)
+  G->>A: introspect
+  G->>P: Crear intento autorizado
+  P->>O: Consultar monto, propietario y vigencia
+  P->>S: Crear cobro idempotente
+  S-->>C: URL de checkout con token opaco
+  C->>S: Elegir resultado por ruta publica del gateway
+  S->>P: Aviso firmado
+  P->>S: Verificar resultado, monto y moneda
+  P->>O: Aplicar resultado verificado
+  alt Reserva vigente y pago aceptable
+    O->>I: Consumir reserva una vez
+    Note over O: Pedido pagado, venta y comprobante unicos
+  else Pedido expirado, cancelado o cobro duplicado
+    O-->>P: No aceptar como venta
+    P->>S: Reembolsar con referencia idempotente
+  end
+  Note over S,P: Si falla una dependencia, repetir el mismo resultado, sin recuperacion automatica

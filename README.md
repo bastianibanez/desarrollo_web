@@ -2,7 +2,7 @@
 
 Proyecto para la evaluación 2. El objetivo es mostrar las responsabilidades de cada servicio, las reglas de negocio y los controles pedidos en la rúbrica, con una implementación que se pueda explicar y ejecutar localmente.
 
-El backend nuevo está en `services/` y se inicia con `docker-compose.yml`. El backend anterior y su base se conservan; el frontend todavía no está conectado a esta implementación.
+El backend nuevo está en `services/` y se inicia con `docker-compose.yml`. El backend anterior y su base se conservan; el frontend es una demo estática independiente, con sesión ficticia y datos locales.
 
 ## Cómo está organizado
 
@@ -28,7 +28,7 @@ docker compose ps
 curl http://localhost:8000/health
 ```
 
-Solo se publica el gateway en `127.0.0.1:8000`. Documentación: [localhost:8000/docs](http://localhost:8000/docs). Se puede elegir otro puerto mediante `FITEXPRESS_PORT` al ejecutar Compose.
+Se publican el gateway en `127.0.0.1:8000` y la demo estática en `127.0.0.1:5173`. Documentación: [localhost:8000/docs](http://localhost:8000/docs). Se puede elegir otro puerto mediante `FITEXPRESS_PORT` al ejecutar Compose.
 
 ```sh
 docker compose stop
@@ -87,7 +87,7 @@ npm run check --prefix services/graphql
 
 Las pruebas requieren Node y ejecutan el servidor Apollo real contra las APIs Python, con bases temporales y credenciales de prueba. Incluyen el recorrido por sockets HTTP y el vencimiento automático. La suite histórica `backend_api/tests` corresponde al backend anterior y se ejecuta por separado.
 
-Resultado actual: **34 pruebas aprobadas** y demostración con Docker/Vault real comprobada. [Estado y evidencias](docs/estado-backend-e2.md). [Reglas](docs/reglas-pedidos.md), [contratos REST](docs/contratos-rest.md), [GraphQL](docs/contratos-graphql.md) y [plan HTML](docs/plan-evaluacion-2.html).
+Resultados reproducibles y alcance: [evidencias](docs/evidencias/README.md). Entregables de la rúbrica: [informe](docs/informe-evaluacion-2.md), [REST](docs/contratos-rest.md), [GraphQL](docs/contratos-graphql.md), [modelo de datos](docs/modelo-datos.md) y [ADR](docs/adr-001-rest-analitica.md). Uso del frontend: [demo estática](frontend/README.md).
 
 ## Organización y referencia del curso
 
@@ -95,4 +95,4 @@ Cada aplicación tiene su carpeta: `services/auth/auth_service.py`, `services/ga
 
 Referencia: [Unidad 2 del profesor](https://github.com/evivanco/dwm20260203/tree/b239e1b9a1d9d0c3fa2673ae36d3a1ceded08a8e/Unidad%202). Se replica Auth `/login`–`/introspect`–`/logout`, Bearer, cabeceras verificadas y Apollo/Express. Se usa Express 4.21.2, compatible con Apollo 3.13.0, en lugar de forzar la combinación con Express 5 declarada en el ejemplo. Se conserva SQLite, elección autorizada por el docente, y la agregación privada requerida por la evaluación.
 
-`backend_api/` y `api_gateway/` contienen la implementación anterior con cambios locales del usuario; no se utilizan en el Compose oficial. El frontend aún espera el contrato anterior y requiere una migración posterior. Las sesiones de la implementación previa deben iniciarse de nuevo; no se borra la base histórica ni se migran sus sesiones automáticamente.
+`backend_api/` y `api_gateway/` contienen la implementación anterior con cambios locales del usuario; no se utilizan en el Compose oficial. El frontend usa datos locales y no consume ninguno de los dos backends. Las sesiones de la implementación previa deben iniciarse de nuevo; no se borra la base histórica ni se migran sus sesiones automáticamente.
