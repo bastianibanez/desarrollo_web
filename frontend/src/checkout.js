@@ -1,19 +1,20 @@
-import { getComunas, crearOrden, yo } from './api.js';
+import { getComunas, yo } from './api.js';
 import { formatearPrecio } from './formato.js';
-import { leerCarrito, cambiarCantidad, quitarDelCarrito, vaciarCarrito } from './carrito.js';
+import { leerCarrito, cambiarCantidad, quitarDelCarrito } from './carrito.js';
 import { actualizarBadge } from './nav.js';
 import { imagenDeItem } from './imagenes.js';
 import { irAAcceso } from './sesion.js';
 
 const $ = (id) => document.getElementById(id);
 
-const comunas = await getComunas();
+let comunas = [];
+try { comunas = await getComunas(); } catch (err) { alerta('danger', err.message); }
 for (const c of comunas) {
   $('comuna').add(new Option(`${c.nombre}`, c.id));
 }
 
-// El comprador es el cliente de la sesión: sus datos vienen de GET /yo, no del formulario
-let puedeComprar = false;
+// Los datos del comprador vienen del perfil autenticado.
+
 try {
   const usuario = await yo();
   if (usuario.perfil) {
@@ -22,7 +23,6 @@ try {
     $('comprador-rut').textContent = p.rut;
     $('comprador-email').textContent = p.email;
     $('comprador-telefono').textContent = p.telefono;
-    puedeComprar = true;
   } else {
     alerta('danger', 'Ingresa con una cuenta de cliente para crear un pedido.');
   }
@@ -34,7 +34,7 @@ render();
 
 $('comuna').addEventListener('change', render);
 $('carrito-lista').addEventListener('click', onClickLista);
-$('checkout-form').addEventListener('submit', onSubmit);
+
 
 function render() {
   const items = leerCarrito();
@@ -47,7 +47,10 @@ function render() {
   $('despacho').textContent = formatearPrecio(envio);
   $('total').textContent = formatearPrecio(subtotal + envio);
 
-  $('btn-pagar').disabled = items.length === 0 || !puedeComprar;
+  $('btn-pagar').disabled = true;
+  $('btn-pagar').textContent = 'Compra de ejemplo';
+  $('pago-pendiente').hidden = true;
+
   actualizarBadge();
 }
 
@@ -106,33 +109,6 @@ function onClickLista(e) {
   render();
 }
 
-async function onSubmit(e) {
-  e.preventDefault();
-  const f = Object.fromEntries(new FormData(e.target));
-
-  const orden = {
-    direccion: {
-      calle: f.calle,
-      numero: f.numero,
-      departamento: f.departamento || null,
-      comuna_id: Number(f.comuna),
-    },
-    items: leerCarrito().map((i) =>
-      i.tipo === 'combo'
-        ? { combo_id: i.id, cantidad: i.cantidad }
-        : { producto_id: i.id, cantidad: i.cantidad }),
-  };
-
-  try {
-    const res = await crearOrden(orden);
-    vaciarCarrito();
-    e.target.reset();
-    render();
-    alerta('success', `Pedido #${res.id} pendiente. Total: ${formatearPrecio(res.total)}`);
-  } catch (err) {
-    alerta('danger', err.message);
-  }
-}
 
 function alerta(tipo, mensaje) {
   $('checkout-alert').className = `alert alert-${tipo}`;

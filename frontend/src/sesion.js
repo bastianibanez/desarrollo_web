@@ -1,7 +1,8 @@
-import { logout } from './api.js';
+import { logout, TOKEN_KEY } from './api.js';
 
 export function irAAcceso() {
-  sessionStorage.removeItem('sesion');
+  sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem('compra-pendiente');
   location.href = 'acceso.html';
 }
 

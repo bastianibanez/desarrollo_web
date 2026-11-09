@@ -23,6 +23,14 @@ x-app: &app
   command: [uvicorn, services.clients.backend_api:app, --host, 0.0.0.0, --port, '9000', --no-access-log]
 
 services:
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports: ['127.0.0.1:5173:80']
+    networks: [public]
+    restart: unless-stopped
+
   vault:
     image: hashicorp/vault:1.21
     environment:

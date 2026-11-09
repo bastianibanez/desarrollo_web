@@ -62,6 +62,8 @@
           </a>
         </li>
         <li><a href="acceso.html" class="nav-link px-2">Acceso</a></li>
+        <li><a href="panel.html" class="nav-link px-2">Panel</a></li>
+        <li><a href="cuenta.html" class="nav-link px-2">Mi cuenta</a></li>
       </ul>
 
     </header>
@@ -69,7 +71,14 @@
       <a href="index.html" class="link-success d-inline-block mb-4">&larr; Seguir comprando</a>
       <div class="border rounded-3 p-3 p-md-5">
         <h1 class="h2 text-center text-success mb-5">Finalizar compra</h1>
-        <div id="checkout-alert"></div>
+        <div id="checkout-alert" role="status"></div>
+        <section id="pago-pendiente" class="border rounded-3 p-3 mb-4" hidden>
+          <h2 class="h5">Pago del pedido</h2>
+          <p>El pago es simulado. No se cobra dinero real.</p>
+          <button id="continuar-pago" type="button" class="btn btn-success">Iniciar o reintentar pago</button>
+          <a id="abrir-pago" class="btn btn-outline-success" target="_blank" rel="noopener noreferrer" hidden>Abrir pago simulado</a>
+          <button id="revisar-pago" type="button" class="btn btn-outline-secondary">Consultar estado</button>
+        </section>
         <form id="checkout-form">
           <div class="row g-4 g-lg-5">
             <section class="col-lg-6" aria-labelledby="delivery-title">
@@ -106,7 +115,7 @@
                     <label for="departamento" class="form-label">Departamento <span
                         class="text-body-secondary">(opcional)</span></label>
                     <input type="text" class="form-control" id="departamento" name="departamento"
-                      autocomplete="address-line2" placeholder="Depto. 402" maxlength="100" />
+                      autocomplete="address-line2" placeholder="Depto. 402" maxlength="60" />
                   </div>
                   <div class="col-sm-6">
                     <label for="comuna" class="form-label">Comuna</label>

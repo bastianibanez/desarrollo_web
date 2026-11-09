@@ -6,8 +6,21 @@ import { imagenDeItem, imagenHero } from './imagenes.js';
 
 document.getElementById('hero-image').src = imagenHero();
 
-const combos = await getCombos();
-const productos = await getProductos();
+let combos = [], productos = [];
+try {
+  try {
+    [combos, productos] = await Promise.all([getCombos(), getProductos()]);
+  } catch (err) {
+    if (err.status !== 401) throw err;
+    [combos, productos] = await Promise.all([getCombos(), getProductos()]);
+  }
+} catch (err) {
+  const aviso = document.createElement('p');
+  aviso.className = 'alert alert-danger';
+  aviso.setAttribute('role', 'alert');
+  aviso.textContent = err.message;
+  document.querySelector('main').prepend(aviso);
+}
 
 // row-cols-2 bajo 768px, row-cols-md-4 desde ahí: cada slide trae una fila completa
 const desktop = window.matchMedia('(min-width: 768px)');
@@ -89,7 +102,7 @@ function crearCard(item, tipo) {
     antes.textContent = formatearPrecio(item.precio);
     antes.classList.replace('d-none', 'd-block');
   }
-  const disponible = tipo === 'combo' ? item.disponible : item.stock > 0;
+  const disponible = item.disponible;
   const boton = col.querySelector('button');
   if (!disponible) {
     boton.disabled = true;
