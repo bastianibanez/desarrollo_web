@@ -1,4 +1,5 @@
 import time
+import os
 
 import httpx
 from fastapi import Depends, HTTPException, Request, Response
@@ -32,6 +33,11 @@ class RateLimiter:
         self.counts[key] = self.counts.get(key, 0) + 1
 
 
+def cors_origins():
+    raw = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+    return [o.strip() for o in raw.split(",") if o.strip()]
+
+
 def create_app(ctx=None):
     ctx = ctx or Context("gateway")
     app = application(ctx, external=True)
@@ -41,7 +47,7 @@ def create_app(ctx=None):
     app.state.rate = rate
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+        allow_origins=cors_origins(),
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=[
             "Content-Type",
