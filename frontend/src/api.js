@@ -94,7 +94,7 @@ export const getReporte = async (desde, hasta) => {
 const soloLectura = async () => { throw new Error('Demo estática: esta acción no guarda cambios ni realiza cobros.'); };
 
 export const login = datos => request('/login', { method: 'POST', body: JSON.stringify(datos) });
-export const logout = datos => request('/logout', { method: 'POST' });
+export const logout = () => request('/logout', { method: 'POST' });
 export const obtenerPerfil = async () => {
   const { perfil } = await graphql(`{ perfil { id identificador rol clienteId correoVerificado datosCliente { nombres apellidos rut email telefono direccion comuna } } }`);
   return { ...perfil, perfil: perfil.datosCliente };
