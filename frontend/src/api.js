@@ -2,7 +2,54 @@
 import { categorias, productos, combos, comunas } from './demo-datos.js';
 import './demo.js';
 
-export const TOKEN_KEY = 'fitexpress-demo';
+const base = import.meta.env?.VITE_API_URL || 'http://localhost:8000/api';
+export const API_BASE = base.endsWith('/') ? base.slice(0, -1) : base;
+export const TOKEN_KEY = 'access_token';
+
+export class ApiError extends Error {
+  constructor({ status, codigo, mensaje, requestId, retryAfter = null }) {
+    super(mensaje || 'No se pudo completar la operación.');
+    Object.assign(this, { status, codigo, requestId, retryAfter });
+  }
+}
+
+async function request(path, options = {}) {
+  const requestId = crypto.randomUUID();
+  const headers = { 'Content-Type': 'application/json', 'X-Request-ID': requestId, ...options.headers };
+  const token = sessionStorage.getItem(TOKEN_KEY);
+  if (token) headers.Authorization = `Bearer ${token}`;
+  let res;
+  try {
+    res = await fetch(API_BASE + path, { ...options, headers });
+  } catch {
+    throw new ApiError({ status: 0, codigo: 'RED', requestId });
+  }
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    if (res.status === 401) sessionStorage.removeItem(TOKEN_KEY);
+    throw new ApiError({
+      status: res.status,
+      codigo: data?.codigo || `HTTP_${res.status}`,
+      mensaje: typeof data?.detail === 'string' ? data.detail : null,
+      requestId: res.headers.get('X-Request-ID') || requestId,
+      retryAfter: Number(res.headers.get('Retry-After')) || null,
+    });
+  }
+  return data;
+}
+
+const CODIGO_A_STATUS = { UNAUTHENTICATED: 401, FORBIDDEN: 403, TIMEOUT: 504, DEPENDENCY_UNAVAILABLE: 503 };
+async function graphql(query, variables = {}) {
+  const result = await request('/graphql', { method: 'POST', body: JSON.stringify({ query, variables }) });
+  if (result.errors?.length) {
+    const issue = result.errors.find(e => e.extensions?.code === 'UNAUTHENTICATED') || result.errors[0];
+    const codigo = issue.extensions?.code || 'FIELD_ERROR';
+    if (codigo === 'UNAUTHENTICATED') sessionStorage.removeItem(TOKEN_KEY);
+    throw new ApiError({ status: CODIGO_A_STATUS[codigo] || 400, codigo, mensaje: issue.message });
+  }
+  return result.data;
+}
+
 const copia = value => structuredClone(value);
 const cliente = {
   id: 1, nombres: 'Camila', apellidos: 'Soto', rut: '12.345.678-5',
@@ -27,10 +74,6 @@ export const getCategorias = async () => copia(categorias);
 export const getComunas = async () => copia(comunas);
 export const getClientes = async () => [copia(cliente)];
 export const getUsuarios = async () => copia(usuarios);
-export const yo = async () => copia({
-  ...usuarios[globalThis.location?.pathname.endsWith('/panel.html') ? 1 : 0],
-  clienteId: 1, correoVerificado: true, perfil: cliente,
-});
 export const getCajas = async () => [{ id: 1, nombre: 'Web', cajero_id: 3 }];
 export const getPedidos = async (_rol, filtros = {}) => copia(pedidos.filter(p => !filtros.estado || p.estado === filtros.estado));
 export const getPedido = async id => {
@@ -49,8 +92,13 @@ export const getReporte = async (desde, hasta) => {
   return { ventas, total: ventas.reduce((total, v) => total + v.total, 0) };
 };
 const soloLectura = async () => { throw new Error('Demo estática: esta acción no guarda cambios ni realiza cobros.'); };
-export const login = soloLectura;
-export const logout = soloLectura;
+
+export const login = datos => request('/login', { method: 'POST', body: JSON.stringify(datos) });
+export const logout = datos => request('/logout', { method: 'POST' });
+export const obtenerPerfil = async () => {
+  const { perfil } = await graphql(`{ perfil { id identificador rol clienteId correoVerificado datosCliente { nombres apellidos rut email telefono direccion comuna } } }`);
+  return { ...perfil, perfil: perfil.datosCliente };
+}
 export const registro = soloLectura;
 export const verificarCorreo = soloLectura;
 export const crearOrden = soloLectura;
