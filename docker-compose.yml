@@ -71,6 +71,11 @@ services:
 
   auth:
     <<: *app
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN_FILE: /run/identity/token
+      DATA_DIR: /data
+      AUTH_SESSION_TTL_SECONDS: ${AUTH_SESSION_TTL_SECONDS:-28800}
     command: [uvicorn, services.auth.auth_service:app, --host, 0.0.0.0, --port, '8100', --no-access-log]
     volumes:
       - data-auth:/data

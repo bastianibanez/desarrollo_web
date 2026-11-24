@@ -1,4 +1,4 @@
-"""Administración local: ejecutar dentro del contenedor clients, sin APIs públicas extra."""
+"""Administración local: ejecutar dentro del contenedor clients (auth para expirar-sesiones)."""
 
 import argparse
 import getpass
@@ -7,15 +7,33 @@ import sys
 
 from services.common import Context, now, password_hash
 
+DEMO = "demo@fitexpress.cl"
+
+
+def expire_sessions(ctx, usuario_id=None):
+    moment = now()
+    sql, params = "UPDATE sesiones SET expira_at=? WHERE expira_at>?", [moment, moment]
+    if usuario_id:
+        sql += " AND usuario_id=?"
+        params.append(usuario_id)
+    with ctx.transaction() as db:
+        return db.execute(sql, params).rowcount
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["create-admin", "seed-demo", "mensajes"])
+    parser.add_argument(
+        "command", choices=["create-admin", "seed-demo", "mensajes", "expirar-sesiones"]
+    )
     parser.add_argument("--identificador", default="admin@fitexpress.test")
     parser.add_argument("--password-stdin", action="store_true")
+    parser.add_argument("--usuario-id", type=int)
     args = parser.parse_args()
-    ctx = Context("clients")
+    ctx = Context("auth" if args.command == "expirar-sesiones" else "clients")
     ctx.initialize()
+    if args.command == "expirar-sesiones":
+        print(f"Sesiones expiradas: {expire_sessions(ctx, args.usuario_id)}")
+        return
     if args.command == "mensajes":
         with ctx.read() as db:
             messages = [
@@ -26,15 +44,14 @@ def main():
             ]
         print(json.dumps(messages, ensure_ascii=False))
         return
+    minimum = 12 if args.command == "create-admin" else 6
     password = (
         sys.stdin.readline().rstrip("\n")
         if args.password_stdin
-        else getpass.getpass("Contraseña (mínimo 12 caracteres): ")
+        else getpass.getpass(f"Contraseña (mínimo {minimum} caracteres): ")
     )
-    if len(password) < 12:
-        parser.error(
-            "La contraseña de administración/demo requiere al menos 12 caracteres"
-        )
+    if len(password) < minimum:
+        parser.error(f"La contraseña requiere al menos {minimum} caracteres")
     with ctx.transaction() as db:
         if args.command == "create-admin":
             db.execute(
@@ -43,48 +60,35 @@ def main():
             )
             print("Administrador creado.")
         else:
-            result = {}
-            for role in ("administrador", "cajero", "despacho", "dueno"):
-                identifier = f"{role}@fitexpress.test"
-                db.execute(
-                    "INSERT OR IGNORE INTO usuarios(identificador,password_hash,rol,created_at) VALUES(?,?,?,?)",
-                    (identifier, password_hash(password), role, now()),
-                )
-                db.execute(
-                    "UPDATE usuarios SET password_hash=? WHERE identificador=? AND rol=?",
-                    (password_hash(password), identifier, role),
-                )
-                result[role] = dict(
-                    db.execute(
-                        "SELECT id,identificador,rol FROM usuarios WHERE identificador=?",
-                        (identifier,),
-                    ).fetchone()
-                )
             db.execute(
                 """INSERT OR IGNORE INTO clientes(nombres,apellidos,rut,email,telefono,direccion,comuna_id,comuna_nombre,
               provincia,region,fecha_nacimiento,sexo,email_verificado_at,created_at,updated_at)
-              VALUES('Cliente','Demostración','12345678-5','cliente@fitexpress.test','900000000','Calle ficticia 10',1,
+              VALUES('Cuenta','Demo','11111111-1',?,'900000000','Calle ficticia 10',1,
               'Providencia','Santiago','Metropolitana','2000-01-01','No especificado',?,?,?)""",
-                (now(), now(), now()),
+                (DEMO, now(), now(), now()),
             )
             id = db.execute(
-                "SELECT id FROM clientes WHERE email='cliente@fitexpress.test'"
+                "SELECT id FROM clientes WHERE email=?", (DEMO,)
             ).fetchone()[0]
             db.execute(
-                "INSERT OR IGNORE INTO usuarios(cliente_id,identificador,password_hash,rol,created_at) VALUES(?,'cliente@fitexpress.test',?,'cliente',?)",
-                (id, password_hash(password), now()),
+                "INSERT OR IGNORE INTO usuarios(cliente_id,identificador,password_hash,rol,created_at) VALUES(?,?,?,'cliente',?)",
+                (id, DEMO, password_hash(password), now()),
             )
             db.execute(
                 "UPDATE usuarios SET password_hash=? WHERE cliente_id=?",
                 (password_hash(password), id),
             )
-            result["cliente"] = dict(
-                db.execute(
-                    "SELECT id,identificador,rol,cliente_id FROM usuarios WHERE cliente_id=?",
-                    (id,),
-                ).fetchone()
+            print(
+                json.dumps(
+                    dict(
+                        db.execute(
+                            "SELECT id,identificador,rol,cliente_id FROM usuarios WHERE cliente_id=?",
+                            (id,),
+                        ).fetchone()
+                    ),
+                    ensure_ascii=False,
+                )
             )
-            print(json.dumps(result, ensure_ascii=False))
 
 
 if __name__ == "__main__":
