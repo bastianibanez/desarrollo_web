@@ -1,5 +1,6 @@
-"""Provisiona identidades mínimas de Vault; no imprime ni versiona secretos."""
+"""Provisiona y verifica identidades mínimas de Vault; no imprime ni versiona secretos."""
 
+import argparse
 import os
 import secrets
 from pathlib import Path
@@ -26,12 +27,17 @@ EDGES = {
 }
 
 
+def vault_client(token, transport=None):
+    return httpx.Client(
+        base_url=os.getenv("VAULT_ADDR", "http://vault:8200"),
+        headers={"X-Vault-Token": token},
+        timeout=5,
+        transport=transport,
+    )
+
+
 def provision():
-    token = os.environ["VAULT_TOKEN"]
-    address = os.getenv("VAULT_ADDR", "http://vault:8200")
-    with httpx.Client(
-        base_url=address, headers={"X-Vault-Token": token}, timeout=5
-    ) as client:
+    with vault_client(os.environ["VAULT_TOKEN"]) as client:
         # Compose ya espera el healthcheck de Vault antes de iniciar este comando.
         client.get("/v1/sys/health").raise_for_status()
         identities = {}
@@ -80,5 +86,51 @@ def provision():
     print("Identidades de servicio provisionadas en Vault (sin valores en logs).")
 
 
-if __name__ == "__main__":
+def verify(root=Path("/identities"), transport=None):
+    names = sorted(p.name for p in root.iterdir() if (p / "token").exists())
+    failures = 0
+    print(
+        f"{'servicio':<10} {'politica':<15} {'ttl_s':>6} {'renovable':<9} "
+        f"{'propio':>6} {'ajeno':>5} {'self':>4}  resultado"
+    )
+    with vault_client(os.environ["VAULT_TOKEN"], transport) as admin:
+        for name in names:
+            token = (root / name / "token").read_text().strip()
+            info = admin.post("/v1/auth/token/lookup", json={"token": token})
+            info.raise_for_status()
+            data = info.json()["data"]
+            other = next(n for n in names if n != name)
+            with vault_client(token, transport) as own:
+                propio = own.get(f"/v1/secret/data/services/{name}").status_code
+                ajeno = own.get(f"/v1/secret/data/services/{other}").status_code
+                self_lookup = own.get("/v1/auth/token/lookup-self").status_code
+            ok = (
+                data["policies"] == [f"fit-{name}"]
+                and data["ttl"] > 0
+                and not data["renewable"]
+                and (propio, ajeno, self_lookup) == (200, 403, 403)
+            )
+            failures += not ok
+            print(
+                f"{name:<10} {','.join(data['policies']):<15} {data['ttl']:>6} "
+                f"{data['renewable']!s:<9} {propio:>6} {ajeno:>5} {self_lookup:>4}  "
+                f"{'OK' if ok else 'FALLA'}"
+            )
+    return failures
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "command",
+        nargs="?",
+        default="provisionar",
+        choices=["provisionar", "verificar"],
+    )
+    if parser.parse_args().command == "verificar":
+        raise SystemExit(1 if verify() else 0)
     provision()
+
+
+if __name__ == "__main__":
+    main()
