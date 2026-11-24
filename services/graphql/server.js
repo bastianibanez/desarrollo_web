@@ -6,17 +6,35 @@ const { loadKeys, equal, createContext } = require('./context');
 const { resolvers } = require('./resolvers');
 const { limitPlugin } = require('./limits');
 
+const logPlugin = {
+  async requestDidStart() {
+    return {
+      async willSendResponse({ errors, context }) {
+        const codes = [...new Set((errors || []).map(e => e.extensions?.code || 'FIELD_ERROR'))];
+        if (codes.length) context.notas.push(`errores GraphQL ${codes.join(', ')}`);
+      }
+    };
+  }
+};
+
 async function startServer() {
   const keys = await loadKeys();
   const app = express();
   app.get('/health', (_, res) => res.json({ status: 'ok', service: 'graphql' }));
   app.use((req, res, next) => {
-    if (!equal(req.headers['x-gateway-secret'], keys.incoming.gateway)) return res.status(403).json({ detail: 'Gateway no autorizado' });
+    const started = Date.now();
+    const ruta = req.path;
+    const valido = equal(req.headers['x-gateway-secret'], keys.incoming.gateway);
+    const otro = (valido ? 'gateway' : '?').padEnd(9);
+    res.locals.notas = valido ? [] : ['rechazada'];
+    console.log(`<- ${otro} ${req.method.padEnd(5)} ${ruta.padEnd(34)} - ${valido ? 'secreto OK' : 'secreto inválido'}`);
+    res.on('finish', () => console.log(`-> ${otro} ${req.method.padEnd(5)} ${ruta.padEnd(34)} ${res.statusCode}  ${String(Date.now() - started).padStart(5)} ms${res.locals.notas.map(n => ` - ${n}`).join('')}`));
+    if (!valido) return res.status(403).json({ detail: 'Gateway no autorizado' });
     next();
   });
   const typeDefs = gql(await readFile(join(__dirname, 'schema.graphql'), 'utf8'));
-  const server = new ApolloServer({ typeDefs, resolvers, plugins: [limitPlugin],
-    context: ({ req }) => createContext(keys, req.headers),
+  const server = new ApolloServer({ typeDefs, resolvers, plugins: [limitPlugin, logPlugin],
+    context: ({ req, res }) => Object.assign(createContext(keys, req.headers), { notas: res.locals.notas }),
     formatError(err) {
       const code = err.extensions?.code || 'FIELD_ERROR';
       return { message: code === 'INTERNAL_SERVER_ERROR' ? 'No fue posible resolver el campo' : err.message,

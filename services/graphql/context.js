@@ -17,9 +17,11 @@ async function loadKeys() {
     return JSON.parse(await readFile(process.env.TEST_IDENTITY_FILE, 'utf8'));
   }
   const token = (await readFile(process.env.VAULT_TOKEN_FILE || '/run/identity/token', 'utf8')).trim();
+  const started = Date.now();
   const response = await fetch(`${process.env.VAULT_ADDR || 'http://vault:8200'}/v1/secret/data/services/graphql`, {
     headers: { 'X-Vault-Token': token }, signal: AbortSignal.timeout(3000)
   });
+  console.log(`-> vault     GET   secret/data/services/graphql        ${response.status}  ${String(Date.now() - started).padStart(5)} ms - ${response.ok ? 'secreto propio leído' : 'secreto no disponible'}`);
   if (!response.ok) throw new Error('Identidad de GraphQL no disponible');
   return (await response.json()).data.data;
 }
@@ -49,11 +51,15 @@ function createContext(keys, headers) {
       for (const [key, value] of Object.entries(headers)) {
         if (key.startsWith('x-authenticated-') || key === 'x-request-id') outgoing[key] = value;
       }
+      console.log(`-> ${service.padEnd(9)} ${method.padEnd(5)} ${path}`);
+      const started = Date.now();
+      const trace = status => console.log(`-> ${service.padEnd(9)} ${method.padEnd(5)} ${path.padEnd(34)} ${status}  ${String(Date.now() - started).padStart(5)} ms - sin respuesta`);
       let response;
       try {
         response = await fetch(url, { method, headers: outgoing, body: body ? JSON.stringify(body) : undefined,
           signal: AbortSignal.any([deadline, AbortSignal.timeout(3000)]) });
-      } catch {
+      } catch (err) {
+        trace(err.name === 'TimeoutError' ? 'timeout' : 'unavailable');
         throw error(deadline.aborted ? 'Plazo de consulta agotado' : 'Servicio dependiente no disponible', deadline.aborted ? 'TIMEOUT' : 'DEPENDENCY_UNAVAILABLE');
       }
       if (!response.ok) throw error('Recurso no disponible o acceso no autorizado', {
