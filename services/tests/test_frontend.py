@@ -1,4 +1,4 @@
-"""El front habla con el gateway: Bearer, X-Request-ID, errores tipados y guardia de sesión."""
+"""El front habla con el gateway: Bearer, X-Request-ID, reintentos, mensajes y guardia de sesión."""
 
 import shutil
 import subprocess
@@ -16,8 +16,10 @@ let next;
 globalThis.fetch = async (url, opts) => { calls.push({ url, opts }); return next(); };
 const json = (status, body, headers = {}) => new Response(JSON.stringify(body),
   { status, headers: { 'Content-Type': 'application/json', ...headers } });
-// requerirSesion nunca resuelve cuando redirige: se espera un instante y se mira el destino.
 const pendiente = p => Promise.race([p, new Promise(r => setTimeout(() => r('pendiente'), 50))]);
+const nav = ['anonimo', 'cliente', 'interno'].map(n => ({ dataset: { nav: n }, hidden: true }));
+const visibles = () => nav.filter(i => !i.hidden).map(i => i.dataset.nav).join(',');
+globalThis.document = { querySelectorAll: selector => (selector === '[data-nav]' ? nav : []) };
 """
 
 API = r"""
@@ -55,7 +57,43 @@ next = () => json(200, { errors: [{ message: 'Sesión requerida', extensions: { 
 await assert.rejects(api.obtenerPerfil(), e => e.status === 401 && e.codigo === 'UNAUTHENTICATED');
 assert.equal(store.has(api.TOKEN_KEY), false);
 
-// El resto de la demo sigue sin red.
+next = () => json(201, { cliente_id: 7 });
+await api.registro({ email: 'x@example.com' }, 'clave-1');
+assert.equal(calls.at(-1).url, 'http://localhost:8000/api/registro');
+assert.equal(calls.at(-1).opts.method, 'POST');
+assert.equal(calls.at(-1).opts.headers['Idempotency-Key'], 'clave-1');
+
+next = () => json(200, { message: 'Correo verificado' });
+await api.verificarCorreo({ cliente_id: 7, codigo: '123456', password: 'Clave-segura-1' }, 'clave-2');
+assert.equal(calls.at(-1).url, 'http://localhost:8000/api/clientes/verificar-correo');
+assert.equal(calls.at(-1).opts.headers['Idempotency-Key'], 'clave-2');
+
+next = () => json(200, [{ id: 1, nombre: 'Providencia', ciudad: 'Santiago', region: 'Metropolitana', costo_envio: 1990 }]);
+assert.equal((await api.getComunas())[0].costo_envio, 1990);
+assert.equal(calls.at(-1).url, 'http://localhost:8000/api/comunas');
+
+let intentos = 0;
+next = () => ++intentos === 1 ? json(503, { codigo: 'DEPENDENCY_UNAVAILABLE' }) : json(200, []);
+assert.deepEqual(await api.getComunas(), []);
+assert.equal(intentos, 2);
+assert.equal(calls.at(-1).opts.headers['X-Request-ID'], calls.at(-2).opts.headers['X-Request-ID']);
+
+intentos = 0;
+next = () => { intentos++; return json(503, { detail: 'Servicio no disponible', codigo: 'DEPENDENCY_UNAVAILABLE' }); };
+await assert.rejects(api.registro({}, 'clave-3'), e => e.codigo === 'DEPENDENCY_UNAVAILABLE');
+assert.equal(intentos, 1);
+
+intentos = 0;
+next = () => { intentos++; throw new DOMException('Plazo agotado', 'TimeoutError'); };
+await assert.rejects(api.login({}), e => e.status === 0 && e.codigo === 'TIMEOUT_CLIENTE');
+assert.equal(intentos, 1);
+assert.ok(calls.at(-1).opts.signal);
+
+store.set(api.TOKEN_KEY, 't3');
+next = () => json(200, { errors: [{ message: 'Plazo de consulta agotado', extensions: { code: 'TIMEOUT' } }] });
+await assert.rejects(api.obtenerPerfil(), e => e.status === 504
+  && e.requestId === calls.at(-1).opts.headers['X-Request-ID']);
+
 const antes = calls.length;
 assert.ok((await api.getProductos()).length > 0);
 await assert.rejects(api.crearOrden({}), /Demo estática/);
@@ -65,6 +103,7 @@ assert.equal(calls.length, antes);
 GUARDIA = r"""
 const s = await import('./sesion.js');
 const perfil = rol => () => json(200, { data: { perfil: { id: '1', rol, datosCliente: null } } });
+assert.equal(visibles(), 'anonimo');
 
 assert.equal(await pendiente(s.requerirSesion(['administrador'])), 'pendiente');
 assert.equal(destino, 'acceso.html?motivo=sin-sesion&volver=panel.html');
@@ -80,9 +119,12 @@ store.set('access_token', 't');
 next = perfil('cliente');
 assert.equal(await pendiente(s.requerirSesion(['administrador'])), 'pendiente');
 assert.equal(destino, 'cuenta.html?motivo=sin-permiso');
+assert.equal(visibles(), 'cliente');
 
 next = perfil('administrador');
 assert.equal((await s.requerirSesion(['administrador'])).rol, 'administrador');
+assert.equal(store.get('rol'), 'administrador');
+assert.equal(visibles(), 'interno');
 
 next = () => json(503, { detail: 'Servicio no disponible', codigo: 'HTTP_503' });
 await assert.rejects(s.requerirSesion(['administrador']), e => e.status === 503);
@@ -92,12 +134,28 @@ next = () => json(200, { message: 'Sesión finalizada' });
 await s.cerrarSesion();
 assert.equal(destino, 'acceso.html?motivo=cerrada');
 assert.equal(store.has('access_token'), false);
+assert.equal(store.has('rol'), false);
+
+const { ApiError } = await import('./api.js');
+assert.equal(s.mensajeError(new ApiError({ status: 504, codigo: 'DEPENDENCY_TIMEOUT', requestId: 'R1' })),
+  'Un servicio interno tardó demasiado en responder. Inténtalo en unos minutos. Código de seguimiento: R1');
+assert.equal(s.mensajeError(new ApiError({ status: 429, codigo: 'HTTP_429', retryAfter: 30 })),
+  'Demasiados intentos. Espera 30 segundos.');
+assert.equal(s.mensajeError(new ApiError({ status: 401, codigo: 'HTTP_401', mensaje: 'Credenciales inválidas' })),
+  'Credenciales inválidas');
+
+const caja = {};
+globalThis.document = { getElementById: () => caja };
+location.search = '?motivo=expirada';
+s.mostrarMotivo('acceso-alert');
+assert.equal(caja.className, 'alert alert-warning');
+assert.equal(caja.textContent, 'Tu sesión expiró. Ingresa nuevamente.');
 """
 
 
 def run_node(tmp_path, script):
     src = Path(__file__).resolve().parents[2] / "frontend" / "src"
-    for name in ("api.js", "sesion.js", "demo.js", "demo-datos.js"):
+    for name in ("api.js", "sesion.js", "navbar.js", "demo.js", "demo-datos.js"):
         shutil.copyfile(src / name, tmp_path / name)
     (tmp_path / "package.json").write_text('{"type":"module"}')
     result = subprocess.run(
