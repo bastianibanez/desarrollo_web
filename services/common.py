@@ -1,6 +1,7 @@
 """Infraestructura compartida; cada proceso conserva su propia base e identidad."""
 
 import asyncio
+import contextvars
 import hashlib
 import hmac
 import json
@@ -19,8 +20,23 @@ import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.routing import Match
 
 log = logging.getLogger("fitexpress")
+NOTAS = contextvars.ContextVar("notas", default=None)
+OPERACIONES = contextvars.ContextVar("operaciones", default=None)
+EVENTOS = {
+    "login_ok": "sesión creada (usuario {user_id})",
+    "login_rechazado": "login rechazado ({motivo})",
+    "sesion_inactiva": "sesión inválida ({motivo})",
+    "logout": "sesión cerrada",
+    "token_valido": "token válido (usuario {user_id}, {rol})",
+    "autorizado": "autorizado (usuario {user_id}, {rol})",
+    "prohibido": "prohibido para rol {rol}",
+    "auth_denegado": "sin sesión válida ({motivo})",
+    "limite_excedido": "límite de intentos ({scope})",
+}
+DB_TARGETS = {"SELECT": "FROM", "INSERT": "INTO", "DELETE": "FROM", "UPDATE": None}
 log.setLevel(logging.INFO)
 if not log.handlers:
     log.addHandler(logging.StreamHandler())
@@ -163,6 +179,38 @@ def read_identity(headers):
         fail(401, "Contexto de identidad inválido")
 
 
+def route_template(app, scope):
+    for route in app.router.routes:
+        if route.matches(scope)[0] != Match.NONE:
+            return route.path
+    return "unmatched"
+
+
+def anotar(texto):
+    notas = NOTAS.get()
+    if notas is None:
+        log.info("%s", texto)
+    else:
+        notas.append(texto)
+
+
+def linea(flecha, otro, method, path, detalle=""):
+    log.info("%s %-9s %-5s %-34s%s", flecha, otro, method, path, detalle)
+
+
+def resumen_bd(operaciones):
+    grupos = {}
+    for op, tabla in operaciones:
+        tablas = grupos.setdefault(op, [])
+        if tabla not in tablas:
+            tablas.append(tabla)
+    return "BD " + "; ".join(f"{op} {', '.join(t)}" for op, t in grupos.items())
+
+
+def correlation(request):
+    return {"X-Request-ID": request.state.request_id}
+
+
 def current_user(request, roles=None, optional=False):
     user = getattr(request.state, "user", None)
     if not user:
@@ -188,9 +236,25 @@ class Context:
     def connect(self):
         db = sqlite3.connect(self.path, timeout=15, isolation_level=None)
         db.row_factory = sqlite3.Row
+        db.set_trace_callback(self.persistence)
         db.execute("PRAGMA foreign_keys=ON")
         db.execute("PRAGMA busy_timeout=15000")
         return db
+
+    def persistence(self, statement):
+        operaciones = OPERACIONES.get()
+        words = statement.replace("(", " ").replace(",", " ").split()
+        if operaciones is None or not words or words[0].upper() not in DB_TARGETS:
+            return
+        upper = [w.upper() for w in words]
+        marker = DB_TARGETS[upper[0]]
+        if marker is None:
+            table = words[3] if len(words) > 3 and upper[1] == "OR" else words[1]
+        elif marker in upper[1:-1]:
+            table = words[upper.index(marker, 1) + 1]
+        else:
+            return
+        operaciones.append((upper[0], table.strip('"`[]')))
 
     @contextmanager
     def read(self):
@@ -226,6 +290,7 @@ class Context:
         if self.keys is not None:
             return
         token_file = Path(os.getenv("VAULT_TOKEN_FILE", "/run/identity/token"))
+        started, status = time.monotonic(), "unavailable"
         try:
             token = token_file.read_text().strip()
             async with httpx.AsyncClient(timeout=3) as client:
@@ -234,10 +299,22 @@ class Context:
                     + f"/v1/secret/data/services/{self.name}",
                     headers={"X-Vault-Token": token},
                 )
+                status = r.status_code
                 r.raise_for_status()
                 self.keys = r.json()["data"]["data"]
         except (OSError, httpx.HTTPError, KeyError, ValueError):
+            self.vault(status, started)
             fail(503, "Identidad de servicio no disponible", "VAULT_UNAVAILABLE")
+        self.vault(status, started)
+
+    def vault(self, status, started):
+        log.info(
+            "-> vault     GET   secret/data/services/%-15s %s  %5.0f ms - %s",
+            self.name,
+            status,
+            (time.monotonic() - started) * 1000,
+            "secreto propio leído" if status == 200 else "secreto no disponible",
+        )
 
     def url(self, target):
         if target == "auth":
@@ -273,6 +350,8 @@ class Context:
         if key:
             outgoing["Idempotency-Key"] = key
         outgoing.update(headers or {})
+        linea("->", target, method, path)
+        started = time.monotonic()
         try:
             r = await self.http.request(
                 method,
@@ -282,7 +361,11 @@ class Context:
                 headers=outgoing,
                 timeout=3,
             )
+        except httpx.TimeoutException:
+            self.upstream(target, method, path, "timeout", started)
+            fail(504, "Servicio dependiente sin respuesta", "DEPENDENCY_TIMEOUT")
         except httpx.RequestError:
+            self.upstream(target, method, path, "unavailable", started)
             fail(503, "Servicio dependiente no disponible", "DEPENDENCY_UNAVAILABLE")
         if r.status_code >= 400:
             try:
@@ -292,6 +375,8 @@ class Context:
                     detail = detail.get("detail", "Operación rechazada")
             except ValueError:
                 detail = "Servicio dependiente no disponible"
+            if r.status_code == 504:
+                fail(504, detail, "DEPENDENCY_TIMEOUT")
             fail(
                 r.status_code if r.status_code < 500 else 503,
                 detail,
@@ -301,6 +386,14 @@ class Context:
             return r.json()
         except ValueError:
             fail(503, "Respuesta dependiente inválida", "DEPENDENCY_UNAVAILABLE")
+
+    def upstream(self, target, method, path, status, started):
+        ms = (time.monotonic() - started) * 1000
+        linea("->", target, method, path, f" {status}  {ms:5.0f} ms - sin respuesta")
+
+    def event(self, request, name, **fields):
+        valores = {k: str(v).replace("_", " ") for k, v in fields.items()}
+        anotar(EVENTOS[name].format(**valores))
 
     async def actor(self, request, roles=None, optional=False):
         return current_user(request, roles, optional)
@@ -399,8 +492,15 @@ def application(ctx, startup=None, worker=None, external=False):
             and correlation.isprintable()
             else str(uuid.uuid4())
         )
+        notas, operaciones = [], []
+        marcas = NOTAS.set(notas), OPERACIONES.set(operaciones)
+        # Solo plantilla de ruta: las URLs pueden contener tokens del simulador.
+        path = route_template(app, request.scope)
+        peer = "navegador" if external else "?"
         try:
             if request.url.path not in {"/health"}:
+                if external:
+                    linea("<-", peer, request.method, path)
                 length = request.headers.get("content-length", "0")
                 if not length.isascii() or not length.isdecimal():
                     fail(400, "Content-Length inválido")
@@ -420,35 +520,40 @@ def application(ctx, startup=None, worker=None, external=False):
                         None,
                     )
                     if not caller:
+                        linea("<-", peer, request.method, path, " - secreto inválido")
+                        notas.append("rechazada sin tocar la BD")
                         fail(403, "Identidad técnica requerida")
+                    peer = caller
+                    linea("<-", peer, request.method, path, " - secreto OK")
                     request.state.caller = caller
                     request.state.user = read_identity(request.headers)
             response = await next_call(request)
         except HTTPException as exc:
             response = error_response(request, exc.status_code, exc.detail, exc.headers)
         except Exception as exc:  # noqa: BLE001 -- frontera HTTP: no exponer excepciones ni datos privados
-            log.error(
-                "%s request_id=%s error=%s",
-                ctx.name,
-                request.state.request_id,
-                type(exc).__name__,
-            )
+            notas.append(f"error interno {type(exc).__name__}")
             response = error_response(
                 request, 500, "No fue posible completar la operación"
             )
         response.headers["X-Request-ID"] = request.state.request_id
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Cache-Control"] = "no-store"
-        # Solo plantilla de ruta: las URLs pueden contener tokens del simulador.
-        route = request.scope.get("route")
+        NOTAS.reset(marcas[0])
+        OPERACIONES.reset(marcas[1])
+        if request.url.path == "/health" and response.status_code < 400:
+            return response
+        if operaciones:
+            notas.append(resumen_bd(operaciones))
+        if response.status_code >= 500:
+            notas.append(f"código de seguimiento {request.state.request_id}")
         log.info(
-            "%s request_id=%s method=%s route=%s status=%s duration_ms=%.2f",
-            ctx.name,
-            request.state.request_id,
+            "-> %-9s %-5s %-34s %s  %5.0f ms%s",
+            peer,
             request.method,
-            getattr(route, "path", "unmatched"),
+            path,
             response.status_code,
             (time.monotonic() - started) * 1000,
+            "".join(f" - {n}" for n in notas),
         )
         return response
 

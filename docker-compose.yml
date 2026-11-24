@@ -27,6 +27,8 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api}
     ports: ['127.0.0.1:5173:80']
     networks: [public]
     restart: unless-stopped
@@ -69,6 +71,11 @@ services:
 
   auth:
     <<: *app
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN_FILE: /run/identity/token
+      DATA_DIR: /data
+      AUTH_SESSION_TTL_SECONDS: ${AUTH_SESSION_TTL_SECONDS:-28800}
     command: [uvicorn, services.auth.auth_service:app, --host, 0.0.0.0, --port, '8100', --no-access-log]
     volumes:
       - data-auth:/data
@@ -130,6 +137,11 @@ services:
 
   gateway:
     <<: *app
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN_FILE: /run/identity/token
+      DATA_DIR: /data
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
     command: [uvicorn, services.gateway.gateway:app, --host, 0.0.0.0, --port, '8000', --no-access-log]
     ports: ['127.0.0.1:${FITEXPRESS_PORT:-8000}:8000']
     networks: [backend, public]

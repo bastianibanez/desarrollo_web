@@ -1,3 +1,5 @@
+import json
+import os
 import time
 
 import httpx
@@ -5,7 +7,16 @@ from fastapi import Depends, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from services.common import Context, application, digest, identity_headers
+from services.common import (
+    Context,
+    application,
+    correlation,
+    digest,
+    encode,
+    fail,
+    identity_headers,
+    linea,
+)
 from services.gateway.routes import ROUTES, SIMULATOR_ROUTES
 
 
@@ -16,20 +27,33 @@ class RateLimiter:
         self.minute = None
         self.counts = {}
 
-    def check(self, key, limit, add=True):
+    def allows(self, key, limit, add=True):
         minute = int(time.monotonic() // 60)
         if minute != self.minute:
             self.minute = minute
             self.counts.clear()
         if self.counts.get(key, 0) >= limit:
-            raise HTTPException(
-                429, "Límite de solicitudes excedido", headers={"Retry-After": "60"}
-            )
+            return False
         if add:
             self.failure(key)
+        return True
 
     def failure(self, key):
         self.counts[key] = self.counts.get(key, 0) + 1
+
+
+def cors_origins():
+    raw = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+    return [o.strip() for o in raw.split(",") if o.strip()]
+
+
+async def login_user(request):
+    try:
+        data = json.loads(await request.body())
+    except ValueError:
+        return ""
+    username = data.get("username") if isinstance(data, dict) else None
+    return username.strip().lower()[:254] if isinstance(username, str) else ""
 
 
 def create_app(ctx=None):
@@ -41,7 +65,7 @@ def create_app(ctx=None):
     app.state.rate = rate
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+        allow_origins=cors_origins(),
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=[
             "Content-Type",
@@ -52,13 +76,26 @@ def create_app(ctx=None):
         expose_headers=["X-Request-ID", "Retry-After"],
     )
 
-    async def authenticate_client(credentials):
+    def limit(request, scope, key, maximum, add=True):
+        if not rate.allows(key, maximum, add):
+            ctx.event(request, "limite_excedido", scope=scope)
+            raise HTTPException(
+                429, "Límite de solicitudes excedido", headers={"Retry-After": "60"}
+            )
+
+    async def authenticate_client(request, credentials):
         if credentials is None:
+            ctx.event(request, "auth_denegado", motivo="sin_token")
             raise HTTPException(401, "Bearer token requerido")
         identity = await ctx.call(
-            "auth", "POST", "/introspect", body={"token": credentials.credentials}
+            "auth",
+            "POST",
+            "/introspect",
+            body={"token": credentials.credentials},
+            headers=correlation(request),
         )
         if not identity.get("active"):
+            ctx.event(request, "auth_denegado", motivo="token_inactivo")
             raise HTTPException(401, "Token inválido o expirado")
         return {
             "id": identity["user_id"],
@@ -74,18 +111,28 @@ def create_app(ctx=None):
             credentials: HTTPAuthorizationCredentials | None = bearer_dependency,
         ):
             ip = request.client.host if request.client else "unknown"
-            login = public_path == "/login"
-            if login:
-                rate.check(("login", ip), 5, add=False)
+            login_key = None
+            if public_path == "/login":
+                login_key = ("login", ip, await login_user(request))
+                limit(request, "login", login_key, 5, add=False)
             user = None
             if roles is not None or (public_path == "/graphql" and credentials):
-                user = await authenticate_client(credentials)
+                user = await authenticate_client(request, credentials)
                 if roles and user["rol"] not in roles:
+                    ctx.event(request, "prohibido", rol=user["rol"], route=public_path)
                     raise HTTPException(403, "Perfil sin permiso")
+                ctx.event(
+                    request,
+                    "autorizado",
+                    user_id=user["id"],
+                    rol=user["rol"],
+                    route=public_path,
+                )
             request.state.user = user
-            rate.check(
-                ("user", user["id"]) if user else ("ip", ip), 60 if user else 120
-            )
+            if user:
+                limit(request, "user", ("user", user["id"]), 60)
+            else:
+                limit(request, "ip", ("ip", ip), 120)
             path = public_path
             for name, value in request.path_params.items():
                 if name == "id" and (not value.isdecimal() or int(value) <= 0):
@@ -114,10 +161,10 @@ def create_app(ctx=None):
                 headers["X-Gateway-Auth-Secret"] = ctx.keys["outgoing"][target]
             body = await request.body()
             if public_path == "/logout":
-                from services.common import encode
-
                 body = encode({"token": credentials.credentials}).encode()
                 headers["content-type"] = "application/json"
+            linea("->", target, method, public_path)
+            started = time.monotonic()
             try:
                 upstream = await ctx.http.request(
                     method,
@@ -127,10 +174,30 @@ def create_app(ctx=None):
                     headers=headers,
                     timeout=15 if target == "graphql" else 10,
                 )
+            except httpx.TimeoutException:
+                ctx.upstream(
+                    target,
+                    method,
+                    public_path,
+                    "timeout",
+                    started,
+                )
+                fail(
+                    504,
+                    "El servicio tardó demasiado en responder",
+                    "DEPENDENCY_TIMEOUT",
+                )
             except httpx.RequestError:
-                raise HTTPException(503, "Servicio no disponible") from None
-            if login and upstream.status_code in {401, 403}:
-                rate.failure(("login", ip))
+                ctx.upstream(
+                    target,
+                    method,
+                    public_path,
+                    "unavailable",
+                    started,
+                )
+                fail(503, "Servicio no disponible", "DEPENDENCY_UNAVAILABLE")
+            if login_key and upstream.status_code in {401, 403}:
+                rate.failure(login_key)
             response_headers = {
                 k: v
                 for k, v in upstream.headers.items()

@@ -1,5 +1,5 @@
-import { yo, getPedidos, cancelarPedido, iniciarPago } from './api.js';
-import { alerta, cerrarSesion, irAAcceso } from './sesion.js';
+import { getPedidos, cancelarPedido, iniciarPago } from './api.js';
+import { alerta, cerrarSesion, irAAcceso, mensajeError, mostrarMotivo, requerirSesion } from './sesion.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -50,7 +50,7 @@ async function cargarPedidos() {
           boton.disabled = true;
           try { await accion(); } catch (err) {
             if (err.status === 401) irAAcceso();
-            else alerta('cuenta-alert', 'danger', err.message);
+            else alerta('cuenta-alert', 'danger', mensajeError(err));
           } finally { boton.disabled = false; }
         });
         acciones.append(boton);
@@ -72,24 +72,21 @@ async function cargarPedidos() {
 $('actualizar-pedidos').addEventListener('click', async () => {
   try { await cargarPedidos(); } catch (err) {
     if (err.status === 401) irAAcceso();
-    else alerta('cuenta-alert', 'danger', err.message);
+    else alerta('cuenta-alert', 'danger', mensajeError(err));
   }
 });
 
+mostrarMotivo('cuenta-alert');
+
 try {
-  const usuario = await yo();
-  if (usuario.rol !== 'cliente') {
-    location.href = 'panel.html';
-  } else {
-    const p = usuario.perfil;
-    $('dato-nombre').textContent = `${p.nombres} ${p.apellidos}`;
-    $('dato-rut').textContent = p.rut;
-    $('dato-email').textContent = p.email;
-    $('dato-telefono').textContent = p.telefono;
-    $('dato-direccion').textContent = [p.direccion, p.comuna].filter(Boolean).join(', ');
-    await cargarPedidos();
-  }
+  const usuario = await requerirSesion(['cliente']);
+  const p = usuario.perfil;
+  $('dato-nombre').textContent = `${p.nombres} ${p.apellidos}`;
+  $('dato-rut').textContent = p.rut;
+  $('dato-email').textContent = p.email;
+  $('dato-telefono').textContent = p.telefono;
+  $('dato-direccion').textContent = [p.direccion, p.comuna].filter(Boolean).join(', ');
+  await cargarPedidos();
 } catch (err) {
-  if (err.status === 401) irAAcceso();
-  else alerta('cuenta-alert', 'danger', err.message);
+  alerta('cuenta-alert', 'danger', mensajeError(err));
 }

@@ -1,8 +1,8 @@
 import { getProductos, getCombos } from './api.js';
 import { formatearPrecio } from './formato.js';
 import { agregarAlCarrito } from './carrito.js';
-import { actualizarBadge } from './nav.js';
 import { imagenDeItem, imagenHero } from './imagenes.js';
+import './navbar.js';
 
 document.getElementById('hero-image').src = imagenHero();
 
@@ -110,7 +110,6 @@ function crearCard(item, tipo) {
   } else {
     boton.addEventListener('click', () => {
       agregarAlCarrito(tipo, { ...item, precio: precioFinal });
-      actualizarBadge();
     });
   }
   return col;

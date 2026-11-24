@@ -34,6 +34,7 @@ class Router(httpx.AsyncBaseTransport):
     def __init__(self):
         self.apps = {}
         self.offline = set()
+        self.slow = set()
         self.lose_refund_response = False
         self.calls = []
         self.graphql_url = None
@@ -46,6 +47,8 @@ class Router(httpx.AsyncBaseTransport):
             raise httpx.ConnectError(
                 "Simulated unavailable dependency", request=request
             )
+        if service in self.slow:
+            raise httpx.ReadTimeout("Simulated slow dependency", request=request)
         if service == "graphql":
             request.url = httpx.URL(self.graphql_url + request.url.raw_path.decode())
             return await self.tcp.handle_async_request(request)

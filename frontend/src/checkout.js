@@ -1,14 +1,13 @@
-import { getComunas, yo } from './api.js';
+import { getComunas } from './api.js';
 import { formatearPrecio } from './formato.js';
 import { leerCarrito, cambiarCantidad, quitarDelCarrito } from './carrito.js';
-import { actualizarBadge } from './nav.js';
 import { imagenDeItem } from './imagenes.js';
-import { irAAcceso } from './sesion.js';
+import { mensajeError, requerirSesion } from './sesion.js';
 
 const $ = (id) => document.getElementById(id);
 
 let comunas = [];
-try { comunas = await getComunas(); } catch (err) { alerta('danger', err.message); }
+try { comunas = await getComunas(); } catch (err) { alerta('danger', mensajeError(err)); }
 for (const c of comunas) {
   $('comuna').add(new Option(`${c.nombre}`, c.id));
 }
@@ -16,19 +15,14 @@ for (const c of comunas) {
 // Los datos del comprador vienen del perfil autenticado.
 
 try {
-  const usuario = await yo();
-  if (usuario.perfil) {
-    const p = usuario.perfil;
-    $('comprador-nombre').textContent = `${p.nombres} ${p.apellidos}`;
-    $('comprador-rut').textContent = p.rut;
-    $('comprador-email').textContent = p.email;
-    $('comprador-telefono').textContent = p.telefono;
-  } else {
-    alerta('danger', 'Ingresa con una cuenta de cliente para crear un pedido.');
-  }
+  const usuario = await requerirSesion(['cliente']);
+  const p = usuario.perfil;
+  $('comprador-nombre').textContent = `${p.nombres} ${p.apellidos}`;
+  $('comprador-rut').textContent = p.rut;
+  $('comprador-email').textContent = p.email;
+  $('comprador-telefono').textContent = p.telefono;
 } catch (err) {
-  if (err.status === 401) irAAcceso();
-  else alerta('danger', err.message);
+  alerta('danger', mensajeError(err));
 }
 render();
 
@@ -50,8 +44,6 @@ function render() {
   $('btn-pagar').disabled = true;
   $('btn-pagar').textContent = 'Compra de ejemplo';
   $('pago-pendiente').hidden = true;
-
-  actualizarBadge();
 }
 
 function crearLinea(item) {

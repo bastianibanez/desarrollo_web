@@ -1,12 +1,12 @@
 import {
   crearCliente, crearProducto, crearUsuario, editarCliente, editarProducto,
   editarUsuario, eliminarProducto, getCategorias, getClientes, getComunas,
-  getProductos, getUsuarios, yo, getCajas, asignarCaja, cancelarPedido,
+  getProductos, getUsuarios, getCajas, asignarCaja, cancelarPedido,
   getReporte, getPedidos, getDespacho, avanzarPedido, iniciarPago, enviarComprobante,
 } from './api.js';
 import { formatearPrecio } from './formato.js';
 import { validarRut } from './rut.js';
-import { alerta, cerrarSesion, irAAcceso } from './sesion.js';
+import { alerta, cerrarSesion, irAAcceso, mensajeError, mostrarMotivo, requerirSesion } from './sesion.js';
 
 const $ = (id) => document.getElementById(id);
 const aviso = (tipo, mensaje) => {
@@ -74,7 +74,7 @@ async function intentar(accion, exito) {
     if (exito) aviso('success', exito);
   } catch (err) {
     if (err.status === 401) irAAcceso();
-    else aviso('danger', err.message);
+    else aviso('danger', mensajeError(err));
   }
 }
 
@@ -314,32 +314,28 @@ function mostrarSegunRol(rol) {
 }
 
 $('btn-logout').addEventListener('click', cerrarSesion);
+mostrarMotivo('panel-alert');
 
 try {
-  const usuario = await yo();
-  if (usuario.rol === 'cliente') {
-    location.href = 'cuenta.html';
-  } else {
-    $('panel-usuario').textContent = `${usuario.identificador} · ${usuario.rol}`;
-    mostrarSegunRol(usuario.rol);
+  const usuario = await requerirSesion(['administrador', 'cajero', 'despacho', 'dueno']);
+  $('panel-usuario').textContent = `${usuario.identificador} · ${usuario.rol}`;
+  mostrarSegunRol(usuario.rol);
 
-    if (usuario.rol === 'administrador') {
-      cargarSelect('ac-comuna', await getComunas(), (c) => c.nombre);
-      await intentar(cargarClientes);
-      await intentar(cargarUsuarios);
-      await intentar(cargarCaja);
-      $('rep-desde').value = '2026-11-01';
-      $('rep-hasta').value = '2026-11-30';
-      $('reporte-form').dispatchEvent(new Event('submit', { cancelable: true }));
-    }
-    if (usuario.rol === 'cajero') await intentar(cargarPagos);
-    if (usuario.rol === 'despacho') await intentar(cargarDespachos);
-    if (usuario.rol === 'administrador' || usuario.rol === 'dueno') {
-      cargarSelect('pr-categoria', await getCategorias(), (c) => c.nombre);
-      await intentar(cargarProductos);
-    }
+  if (usuario.rol === 'administrador') {
+    cargarSelect('ac-comuna', await getComunas(), (c) => c.nombre);
+    await intentar(cargarClientes);
+    await intentar(cargarUsuarios);
+    await intentar(cargarCaja);
+    $('rep-desde').value = '2026-11-01';
+    $('rep-hasta').value = '2026-11-30';
+    $('reporte-form').dispatchEvent(new Event('submit', { cancelable: true }));
+  }
+  if (usuario.rol === 'cajero') await intentar(cargarPagos);
+  if (usuario.rol === 'despacho') await intentar(cargarDespachos);
+  if (usuario.rol === 'administrador' || usuario.rol === 'dueno') {
+    cargarSelect('pr-categoria', await getCategorias(), (c) => c.nombre);
+    await intentar(cargarProductos);
   }
 } catch (err) {
-  if (err.status === 401) irAAcceso();
-  else aviso('danger', err.message);
+  aviso('danger', mensajeError(err));
 }
