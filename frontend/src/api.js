@@ -4,6 +4,7 @@ import './demo.js';
 const base = import.meta.env?.VITE_API_URL || 'http://localhost:8000/api';
 export const API_BASE = base.endsWith('/') ? base.slice(0, -1) : base;
 export const TOKEN_KEY = 'access_token';
+export const ROL_KEY = 'rol';
 const TIMEOUT_MS = 10000;
 const REINTENTABLE = new Set([0, 503, 504]);
 

@@ -1,10 +1,12 @@
-import { logout, obtenerPerfil, TOKEN_KEY } from './api.js';
+import { logout, obtenerPerfil, ROL_KEY, TOKEN_KEY } from './api.js';
+import { mostrarNavegacion } from './navbar.js';
 
 const INICIO = { cliente: 'cuenta.html', administrador: 'panel.html', cajero: 'panel.html', despacho: 'panel.html', dueno: 'panel.html' };
 const nunca = () => new Promise(() => { });
 
 export function irAAcceso(motivo = 'sin-sesion') {
   sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(ROL_KEY);
   sessionStorage.removeItem('compra-pendiente');
   const volver = location.pathname.split('/').pop() || 'index.html';
   location.replace(`acceso.html?motivo=${motivo}&volver=${encodeURIComponent(volver)}`);
@@ -15,6 +17,8 @@ export async function requerirSesion(roles) {
   if (!sessionStorage.getItem(TOKEN_KEY)) return irAAcceso('sin-sesion');
   try {
     const usuario = await obtenerPerfil();
+    sessionStorage.setItem(ROL_KEY, usuario.rol);
+    mostrarNavegacion();
     if (roles && !roles.includes(usuario.rol)) {
       location.replace(`${INICIO[usuario.rol]}?motivo=sin-permiso`);
       return nunca();
@@ -29,6 +33,7 @@ export async function requerirSesion(roles) {
 export async function cerrarSesion() {
   await logout().catch(() => {});
   sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(ROL_KEY);
   location.replace('acceso.html?motivo=cerrada');
 }
 

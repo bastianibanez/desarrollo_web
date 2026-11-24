@@ -1,4 +1,4 @@
-import { getComunas, login, obtenerPerfil, registro, TOKEN_KEY } from './api.js';
+import { getComunas, login, obtenerPerfil, registro, ROL_KEY, TOKEN_KEY } from './api.js';
 import { validarRut } from './rut.js';
 import { alerta, mensajeError, mostrarMotivo } from './sesion.js';
 
@@ -63,6 +63,7 @@ $('login-form').addEventListener('submit', async e => {
     const r = await login({ username: f.identificador, password: f.password });
     sessionStorage.setItem(TOKEN_KEY, r.access_token);
     const usuario = await obtenerPerfil();
+    sessionStorage.setItem(ROL_KEY, usuario.rol);
     location.replace(destino(usuario.rol));
   } catch (err) {
     alerta('acceso-alert', 'danger', mensajeError(err));

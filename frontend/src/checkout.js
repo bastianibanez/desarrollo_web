@@ -1,7 +1,6 @@
 import { getComunas } from './api.js';
 import { formatearPrecio } from './formato.js';
 import { leerCarrito, cambiarCantidad, quitarDelCarrito } from './carrito.js';
-import { actualizarBadge } from './nav.js';
 import { imagenDeItem } from './imagenes.js';
 import { mensajeError, requerirSesion } from './sesion.js';
 
@@ -45,8 +44,6 @@ function render() {
   $('btn-pagar').disabled = true;
   $('btn-pagar').textContent = 'Compra de ejemplo';
   $('pago-pendiente').hidden = true;
-
-  actualizarBadge();
 }
 
 function crearLinea(item) {
