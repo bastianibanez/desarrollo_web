@@ -3,12 +3,12 @@ import { formatearPrecio } from './formato.js';
 import { leerCarrito, cambiarCantidad, quitarDelCarrito } from './carrito.js';
 import { actualizarBadge } from './nav.js';
 import { imagenDeItem } from './imagenes.js';
-import { requerirSesion } from './sesion.js';
+import { mensajeError, requerirSesion } from './sesion.js';
 
 const $ = (id) => document.getElementById(id);
 
 let comunas = [];
-try { comunas = await getComunas(); } catch (err) { alerta('danger', err.message); }
+try { comunas = await getComunas(); } catch (err) { alerta('danger', mensajeError(err)); }
 for (const c of comunas) {
   $('comuna').add(new Option(`${c.nombre}`, c.id));
 }
@@ -23,7 +23,7 @@ try {
   $('comprador-email').textContent = p.email;
   $('comprador-telefono').textContent = p.telefono;
 } catch (err) {
-  alerta('danger', err.message);
+  alerta('danger', mensajeError(err));
 }
 render();
 

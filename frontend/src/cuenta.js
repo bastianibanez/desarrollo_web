@@ -1,5 +1,5 @@
 import { getPedidos, cancelarPedido, iniciarPago } from './api.js';
-import { alerta, cerrarSesion, irAAcceso, requerirSesion } from './sesion.js';
+import { alerta, cerrarSesion, irAAcceso, mensajeError, mostrarMotivo, requerirSesion } from './sesion.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -50,7 +50,7 @@ async function cargarPedidos() {
           boton.disabled = true;
           try { await accion(); } catch (err) {
             if (err.status === 401) irAAcceso();
-            else alerta('cuenta-alert', 'danger', err.message);
+            else alerta('cuenta-alert', 'danger', mensajeError(err));
           } finally { boton.disabled = false; }
         });
         acciones.append(boton);
@@ -72,9 +72,11 @@ async function cargarPedidos() {
 $('actualizar-pedidos').addEventListener('click', async () => {
   try { await cargarPedidos(); } catch (err) {
     if (err.status === 401) irAAcceso();
-    else alerta('cuenta-alert', 'danger', err.message);
+    else alerta('cuenta-alert', 'danger', mensajeError(err));
   }
 });
+
+mostrarMotivo('cuenta-alert');
 
 try {
   const usuario = await requerirSesion(['cliente']);
@@ -86,5 +88,5 @@ try {
   $('dato-direccion').textContent = [p.direccion, p.comuna].filter(Boolean).join(', ');
   await cargarPedidos();
 } catch (err) {
-  alerta('cuenta-alert', 'danger', err.message);
+  alerta('cuenta-alert', 'danger', mensajeError(err));
 }

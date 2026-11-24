@@ -1,5 +1,5 @@
 if (typeof document !== 'undefined') {
-  document.querySelectorAll('form:not(#reporte-form):not(#login-form)').forEach(form => {
+  document.querySelectorAll('form:not(#reporte-form):not(#login-form):not(#registro-form):not(#confirmar-form)').forEach(form => {
     form.addEventListener('submit', event => { event.preventDefault(); event.stopImmediatePropagation(); }, true);
     form.querySelectorAll('[type="submit"]').forEach(boton => {
       boton.disabled = true;

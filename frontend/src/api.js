@@ -1,10 +1,11 @@
-// Adaptador de presentación: datos locales, sin red ni autenticación real.
-import { categorias, productos, combos, comunas } from './demo-datos.js';
+import { categorias, productos, combos } from './demo-datos.js';
 import './demo.js';
 
 const base = import.meta.env?.VITE_API_URL || 'http://localhost:8000/api';
 export const API_BASE = base.endsWith('/') ? base.slice(0, -1) : base;
 export const TOKEN_KEY = 'access_token';
+const TIMEOUT_MS = 10000;
+const REINTENTABLE = new Set([0, 503, 504]);
 
 export class ApiError extends Error {
   constructor({ status, codigo, mensaje, requestId, retryAfter = null }) {
@@ -13,16 +14,15 @@ export class ApiError extends Error {
   }
 }
 
-async function request(path, options = {}) {
-  const requestId = crypto.randomUUID();
+async function enviar(path, options, requestId) {
   const headers = { 'Content-Type': 'application/json', 'X-Request-ID': requestId, ...options.headers };
   const token = sessionStorage.getItem(TOKEN_KEY);
   if (token) headers.Authorization = `Bearer ${token}`;
   let res;
   try {
-    res = await fetch(API_BASE + path, { ...options, headers });
-  } catch {
-    throw new ApiError({ status: 0, codigo: 'RED', requestId });
+    res = await fetch(API_BASE + path, { ...options, headers, signal: AbortSignal.timeout(TIMEOUT_MS) });
+  } catch (err) {
+    throw new ApiError({ status: 0, codigo: err.name === 'TimeoutError' ? 'TIMEOUT_CLIENTE' : 'RED', requestId });
   }
   const data = await res.json().catch(() => null);
   if (!res.ok) {
@@ -38,14 +38,25 @@ async function request(path, options = {}) {
   return data;
 }
 
+async function request(path, options = {}, { lectura = !options.method || options.method === 'GET', requestId = crypto.randomUUID() } = {}) {
+  try {
+    return await enviar(path, options, requestId);
+  } catch (err) {
+    if (!lectura || !REINTENTABLE.has(err.status)) throw err;
+    await new Promise(r => setTimeout(r, 500));
+    return enviar(path, options, requestId);
+  }
+}
+
 const CODIGO_A_STATUS = { UNAUTHENTICATED: 401, FORBIDDEN: 403, TIMEOUT: 504, DEPENDENCY_UNAVAILABLE: 503 };
 async function graphql(query, variables = {}) {
-  const result = await request('/graphql', { method: 'POST', body: JSON.stringify({ query, variables }) });
+  const requestId = crypto.randomUUID();
+  const result = await request('/graphql', { method: 'POST', body: JSON.stringify({ query, variables }) }, { lectura: true, requestId });
   if (result.errors?.length) {
     const issue = result.errors.find(e => e.extensions?.code === 'UNAUTHENTICATED') || result.errors[0];
     const codigo = issue.extensions?.code || 'FIELD_ERROR';
     if (codigo === 'UNAUTHENTICATED') sessionStorage.removeItem(TOKEN_KEY);
-    throw new ApiError({ status: CODIGO_A_STATUS[codigo] || 400, codigo, mensaje: issue.message });
+    throw new ApiError({ status: CODIGO_A_STATUS[codigo] || 400, codigo, mensaje: issue.message, requestId });
   }
   return result.data;
 }
@@ -71,7 +82,6 @@ const pedidos = [
 export const getProductos = async () => copia(productos);
 export const getCombos = async () => copia(combos);
 export const getCategorias = async () => copia(categorias);
-export const getComunas = async () => copia(comunas);
 export const getClientes = async () => [copia(cliente)];
 export const getUsuarios = async () => copia(usuarios);
 export const getCajas = async () => [{ id: 1, nombre: 'Web', cajero_id: 3 }];
@@ -98,9 +108,14 @@ export const logout = () => request('/logout', { method: 'POST' });
 export const obtenerPerfil = async () => {
   const { perfil } = await graphql(`{ perfil { id identificador rol clienteId correoVerificado datosCliente { nombres apellidos rut email telefono direccion comuna } } }`);
   return { ...perfil, perfil: perfil.datosCliente };
-}
-export const registro = soloLectura;
-export const verificarCorreo = soloLectura;
+};
+
+const enviarConClave = (path, body, clave) =>
+  request(path, { method: 'POST', body: JSON.stringify(body), headers: { 'Idempotency-Key': clave } });
+
+export const getComunas = () => request('/comunas');
+export const registro = (datos, clave) => enviarConClave('/registro', datos, clave);
+export const verificarCorreo = (datos, clave) => enviarConClave('/clientes/verificar-correo', datos, clave);
 export const crearOrden = soloLectura;
 export const iniciarPago = soloLectura;
 export const crearCliente = soloLectura;

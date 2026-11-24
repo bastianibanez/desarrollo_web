@@ -6,7 +6,7 @@ import {
 } from './api.js';
 import { formatearPrecio } from './formato.js';
 import { validarRut } from './rut.js';
-import { alerta, cerrarSesion, irAAcceso, requerirSesion } from './sesion.js';
+import { alerta, cerrarSesion, irAAcceso, mensajeError, mostrarMotivo, requerirSesion } from './sesion.js';
 
 const $ = (id) => document.getElementById(id);
 const aviso = (tipo, mensaje) => {
@@ -74,7 +74,7 @@ async function intentar(accion, exito) {
     if (exito) aviso('success', exito);
   } catch (err) {
     if (err.status === 401) irAAcceso();
-    else aviso('danger', err.message);
+    else aviso('danger', mensajeError(err));
   }
 }
 
@@ -314,6 +314,7 @@ function mostrarSegunRol(rol) {
 }
 
 $('btn-logout').addEventListener('click', cerrarSesion);
+mostrarMotivo('panel-alert');
 
 try {
   const usuario = await requerirSesion(['administrador', 'cajero', 'despacho', 'dueno']);
@@ -336,5 +337,5 @@ try {
     await intentar(cargarProductos);
   }
 } catch (err) {
-  aviso('danger', err.message);
+  aviso('danger', mensajeError(err));
 }
